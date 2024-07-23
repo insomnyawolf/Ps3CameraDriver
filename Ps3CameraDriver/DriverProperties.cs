@@ -2,7 +2,6 @@
 
 public partial class Ps3CamDriver
 {
-
     private bool LedStatus;
 
     // Just because it helps testing, it works \:D/
@@ -186,7 +185,7 @@ public partial class Ps3CamDriver
     {
         var val1 = AsByte(val);
 
-        SerialCameraControlBusRegisterWrite(RegisterOV534.BlueChannelGain, val1);
+        SerialCameraControlBusRegisterWrite(RegisterOV534.GainBlueChannel, val1);
         //SerialCameraControlBusRegisterWrite(RegisterOV534.BlcBlueChannelTarget, val1);
     }
 
@@ -194,7 +193,7 @@ public partial class Ps3CamDriver
     {
         var val1 = AsByte(val);
 
-        SerialCameraControlBusRegisterWrite(RegisterOV534.RedChannelGain, val1);
+        SerialCameraControlBusRegisterWrite(RegisterOV534.GainRedChannel, val1);
         //SerialCameraControlBusRegisterWrite(RegisterOV534.BlcRedChannelTarget, val1);
     }
 
@@ -202,7 +201,73 @@ public partial class Ps3CamDriver
     {
         var val1 = AsByte(val);
 
-        SerialCameraControlBusRegisterWrite(RegisterOV534.GreenChannelGain, val1);
+        SerialCameraControlBusRegisterWrite(RegisterOV534.GainGreenChannel, val1);
         //SerialCameraControlBusRegisterWrite(RegisterOV534.BlcGrenChannelTarget, val1);
+    }
+
+    private const byte FlipMask1 = 0x0c;
+    private const byte HorizontalMask = 0x40;
+    private const byte VerticalMask = 0x80;
+    private static readonly byte FlipMaskInverted1 = AsByte(~FlipMask1);
+    public void SetFlipStatus(bool horizontal, bool vertical)
+    {
+        var val1 = SerialCameraControlBusRegisterRead(RegisterOV534.UnknownFrameBufferRelated);
+
+        val1 &= FlipMaskInverted1;
+
+        if (horizontal)
+        {
+            val1 |= HorizontalMask;
+        }
+        if (horizontal)
+        {
+            val1 |= VerticalMask;
+        }
+
+        SerialCameraControlBusRegisterWrite(RegisterOV534.UnknownFrameBufferRelated, val1);
+    }
+
+    public void SetGain(int val)
+    {
+        var temp = val & 0x30;
+
+        if ((temp & 0x00) != 0)
+        {
+            val &= 0x0F;
+        }
+        else if ((temp & 0x10) != 0)
+        {
+            val &= 0x0F;
+            val |= 0x30;
+        }
+        else if ((temp & 0x20) != 0)
+        {
+            val &= 0x0F;
+            val |= 0x70;
+        }
+        else if ((temp & 0x30) != 0)
+        {
+            val &= 0x0F;
+            val |= 0xF0;
+        }
+
+        var data = AsByte(val);
+
+        SerialCameraControlBusRegisterWrite(RegisterOV534.Gain, data);
+    }
+
+    public void SetSaturation(int val)
+    {
+        var val1 = AsByte(val);
+
+        SerialCameraControlBusRegisterWrite(RegisterOV534.Saturation1, val1);
+        SerialCameraControlBusRegisterWrite(RegisterOV534.Saturation2, val1);
+    }
+
+    void SetDebug(bool value)
+    {
+        throw new NotImplementedException();
+        //usb_manager::instance().set_debug(value);
+        //_ps3eye_debug_status = value;
     }
 }

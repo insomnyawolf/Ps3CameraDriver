@@ -15,6 +15,8 @@ internal class Program
 
         ps3cam.ToggleLed();
 
+        ps3cam.ToggleLed();
+
         return Task.CompletedTask;
     }
 }
