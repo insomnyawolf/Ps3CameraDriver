@@ -1,5 +1,4 @@
 ﻿using LibUsbDotNet.Main;
-using System.Runtime.CompilerServices;
 
 namespace Ps3CameraDriver;
 
@@ -7,7 +6,7 @@ public partial class Ps3CamDriver
 {
     // sccb_w_array();
     // output a sensor sequence (reg - val)
-    public void SerialCameraControlBusWriteArray(IList<Command> commands)
+    public void SerialCameraControlBusWriteArray(IReadOnlyList<Command> commands)
     {
         for (int i = 0; i < commands.Count; i++)
         {
@@ -19,18 +18,18 @@ public partial class Ps3CamDriver
 #warning reverse engineer those values
             if (register == 0xff)
             {
-                var data = SerialCameraControlBusRegisterRead(value);
+                var data = SerialCameraControlBusRegisterRead((RegisterOV534)value);
                 value = 0x00;
             }
 
-            SerialCameraControlBusRegisterWrite(register, value);
+            SerialCameraControlBusRegisterWrite((RegisterOV534)register, value);
         }
     }
 
     // sccb_reg_write();
-    public void SerialCameraControlBusRegisterWrite(byte registerAddress, byte value)
+    public void SerialCameraControlBusRegisterWrite(RegisterOV534 register, byte value)
     {
-        HardwareRegisterWrite(OperationsOV534.REG_SUBADDR, registerAddress);
+        HardwareRegisterWrite(OperationsOV534.REG_SUBADDR, (byte)register);
         HardwareRegisterWrite(OperationsOV534.REG_WRITE, value);
         HardwareRegisterWrite(OperationsOV534.REG_OPERATION, (byte)OperationsOV534.OP_WRITE_3);
 
@@ -38,7 +37,7 @@ public partial class Ps3CamDriver
     }
 
     // sccb_reg_read();
-    public byte SerialCameraControlBusRegisterRead(short registerAddress)
+    public byte SerialCameraControlBusRegisterRead(RegisterOV534 registerAddress)
     {
         HardwareRegisterWrite(OperationsOV534.REG_SUBADDR, (byte)registerAddress);
         HardwareRegisterWrite(OperationsOV534.REG_OPERATION, (byte)OperationsOV534.OP_WRITE_2);
@@ -95,7 +94,7 @@ public partial class Ps3CamDriver
 
     // reg_w_array();
     // output a bridge sequence (reg - val)
-    public void RegisterWriteArray(IList<Command> commands)
+    public void HardwareRegisterWriteArray(IReadOnlyList<Command> commands)
     {
         for (int i = 0; i < commands.Count; i++)
         {
@@ -171,18 +170,5 @@ public partial class Ps3CamDriver
         }
 
         return bytesTransfered;
-    }
-
-#warning optimize and unspaguetti this
-    public static byte[] CopyToBuffer<TOrigin>(TOrigin value, byte[] buffer)
-    {
-        ClearBuffer(buffer);
-        Unsafe.As<byte, TOrigin>(ref buffer[0]) = value;
-        return UsbBuffer;
-    }
-
-    public static void ClearBuffer(byte[] buffer)
-    {
-        Array.Clear(buffer, 0, buffer.Length);
     }
 }

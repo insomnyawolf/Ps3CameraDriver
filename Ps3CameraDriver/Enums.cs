@@ -7,6 +7,29 @@ public enum CheckStatusResponses : byte
     Error = 0x04,
 };
 
+public enum RegisterOV534 : byte
+{
+    BlueChannelGain = 0x01,
+    RedChannelGain = 0x02,
+    GreenChannelGain = 0x03,
+    BlcBlueChannelTarget = 0x42,
+    BlcRedChannelTarget = 0x43,
+    BlcGrenChannelTarget = 0x44,
+    /// <summary>
+    /// Uncertain
+    /// </summary>
+    Settings = 0x13,
+    AutoWhiteBalance = 0x63,
+    AutoGain = 0x64,
+    UnknownFrameBufferRelated = 0x0C,
+    Exposure1 = 0x08,
+    Exposure2 = 0x10,
+    Sharpness1 = 0x91,
+    Sharpness2 = 0x8E,
+    Contrast = 0x9C,
+    Brightness = 0x9B,
+};
+
 public enum OperationsOV534 : byte
 {
     /// <summary>
@@ -55,7 +78,7 @@ public enum VideoResolution : byte
     VGA,
 }
 
-public enum VideoFormat : int
+public enum ColorFormat : int
 {
     /// <summary>
     /// Output in Bayer. Destination buffer must be width * height bytes

@@ -11,7 +11,7 @@ internal class Program
 
         var ps3cam = new Ps3CamDriver(device);
 
-        ps3cam.Init(VideoResolution.VGA, 30, VideoFormat.RGB);
+        ps3cam.Init(FrameConfiguration.Default);
 
         ps3cam.ToggleLed();
 

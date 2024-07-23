@@ -144,11 +144,16 @@ public partial class Ps3CamDriver
 	    new Command(0xAC, 0xBF),
     };
 
-    public static readonly IReadOnlyList<CameraConfiguration> CameraConfigurationsList = new List<CameraConfiguration>()
+    public static readonly IReadOnlyList<InternalFrameConfiguration> FrameConfigurationsList = new List<InternalFrameConfiguration>()
     {
-        new CameraConfiguration()
+        new InternalFrameConfiguration()
         {
             VideoResolution = VideoResolution.QVGA,
+            VideoSize = new VideoSize()
+            {
+                Width = 320,
+                Height = 240,
+            },
             NormalizedFrameConfig = new NormalizedFrameConfig[]
             {
                 new NormalizedFrameConfig { fps = 290, Field1 = 0x00, Field2 = 0xc1, Field3 = 0x04 },
@@ -195,9 +200,14 @@ public partial class Ps3CamDriver
                 new Command(0x65, 0x2f),
             },
         },
-        new CameraConfiguration()
+        new InternalFrameConfiguration()
         {
             VideoResolution = VideoResolution.VGA,
+            VideoSize = new VideoSize()
+            {
+                Width = 640,
+                Height = 480,
+            },
             NormalizedFrameConfig = new NormalizedFrameConfig[]
             {
                 // 83 FPS: video is partly corrupt
@@ -239,70 +249,5 @@ public partial class Ps3CamDriver
         },
     };
 
-    public static readonly IReadOnlyDictionary<VideoResolution, CameraConfiguration> CameraConfigurations = CameraConfigurationsList.ToDictionary(i => i.VideoResolution);
+    public static readonly IReadOnlyDictionary<VideoResolution, InternalFrameConfiguration> FrameConfigurations = FrameConfigurationsList.ToDictionary(i => i.VideoResolution);
 }
-
-public class CameraConfiguration
-{
-    public VideoResolution VideoResolution { get; init; }
-    public IReadOnlyList<NormalizedFrameConfig> NormalizedFrameConfig { get; init; }
-    public IReadOnlyList<Command> SensorStart { get; init; }
-    public IReadOnlyList<Command> BridgeStart { get; init; }
-
-    // _normalize_framerate()
-    public NormalizedFrameConfig GetNormalizedFrameConfig(int framesPerSecond)
-    {
-        var candidates = NormalizedFrameConfig;
-
-        NormalizedFrameConfig config = candidates[0];
-
-        for (int i = 1; i < candidates.Count; i++)
-        {
-            var current = candidates[i];
-
-            if (current.fps < framesPerSecond)
-            {
-                break;
-            }
-
-            config = current;
-        }
-
-        return config;
-    }
-}
-
-public struct Command
-{
-    public readonly byte Register;
-    public readonly byte Value;
-
-    public Command(byte Register, byte Value)
-    {
-        this.Register = Register;
-        this.Value = Value;
-    }
-}
-
-public struct NormalizedFrameConfig
-{
-    private const byte Field1Address = 0x11;
-    private const byte Field2Address = 0x0d;
-
-    public int fps;
-
-    // Maybe color configs?
-    public byte Field1;
-    public byte Field2;
-    public byte Field3;
-
-    public void WriteTo(Ps3CamDriver ps3CamDriver)
-    {
-        //sccb_reg_write(0x11, rate.r11);
-        ps3CamDriver.SerialCameraControlBusRegisterWrite(Field1Address, Field1);
-        //sccb_reg_write(0x0d, rate.r0d);
-        ps3CamDriver.SerialCameraControlBusRegisterWrite(Field2Address, Field2);
-        //ov534_reg_write(0xe5, rate.re5);
-        ps3CamDriver.HardwareRegisterWrite(OperationsOV534.Unknown0xe5, Field3);
-    }
-};

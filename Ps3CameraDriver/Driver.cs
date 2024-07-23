@@ -9,22 +9,25 @@ public partial class Ps3CamDriver
 
     private readonly IUsbDevice UsbDevice;
 
-    private VideoResolution VideoResolution;
-    private VideoFormat VideoFormat;
-    private int FramesPerSecond;
+    private InternalFrameConfiguration InternalFrameConfigurationCache;
+    private FrameConfiguration FrameConfigurationCache;
+    private NormalizedFrameConfig NormalizedFrameConfigurationCache;
+
+    private bool IsInitialized;
+    private bool IsStreaming;
 
     public Ps3CamDriver(IUsbDevice IUsbDevice)
     {
         UsbDevice = IUsbDevice;
     }
 
-    public void Init(VideoResolution resolution, int framesPerSecond = 60, VideoFormat videoFormat = VideoFormat.BGR)
+    public void Init(FrameConfiguration frameConfiguration)
     {
         UsbDevice.Open();
 
         var res = UsbDevice.ClaimInterface(0);
 
-        UpdateCameraConfiguration(resolution, framesPerSecond, videoFormat);
+        UpdateCameraConfiguration(frameConfiguration);
 
         BridgeReset();
 
@@ -41,44 +44,78 @@ public partial class Ps3CamDriver
         Initialize();
     }
 
-    public void UpdateCameraConfiguration(VideoResolution resolution, int framesPerSecond = 60, VideoFormat videoFormat = VideoFormat.BGR)
+    public void UpdateCameraConfiguration(FrameConfiguration frameConfiguration)
     {
-        var settings = CameraConfigurations[resolution];
-
-        VideoResolution = settings.VideoResolution;
-
-        VideoFormat = videoFormat;
-
-        var normalizedFrameConfig = settings.GetNormalizedFrameConfig(framesPerSecond);
-
-        FramesPerSecond = normalizedFrameConfig.fps;
-
-        ApplyNewFrameConfig(normalizedFrameConfig);
+        FrameConfigurationCache = frameConfiguration;
+        InternalFrameConfigurationCache = FrameConfigurations[frameConfiguration.Resolution];
+        NormalizedFrameConfigurationCache = InternalFrameConfigurationCache.GetNormalizedFrameConfig(frameConfiguration.FramesPerSecond);
     }
 
     // ov534_set_frame_rate
     // validate frame rate and (if not dry run) set it
-    public void ApplyNewFrameConfig(NormalizedFrameConfig normalizedFrameConfig)
+    public void ApplyNewFrameConfig()
     {
-        normalizedFrameConfig.WriteTo(this);
+        NormalizedFrameConfigurationCache.WriteTo(this);
     }
 
     public void Initialize()
     {
+        HardwareRegisterWriteArray(Ov534_RegistrerInitData);
 
+        SetLed(true);
+
+        SerialCameraControlBusWriteArray(Ov772x_RegistrerInitData);
+
+        HardwareRegisterWrite(OperationsOV534.Bridge2, 0x09);
+
+        SetLed(false);
+
+        IsInitialized = true;
+    }
+
+    public void Start()
+    {
+        if (!IsInitialized)
+        {
+            return;
+        }
+
+        if (IsStreaming)
+        {
+            return;
+        }
+
+        HardwareRegisterWriteArray(InternalFrameConfigurationCache.BridgeStart);
+
+        SerialCameraControlBusWriteArray(InternalFrameConfigurationCache.SensorStart);
+
+        ApplyNewFrameConfig();
+
+#warning image config here
+
+        SetLed(true);
+
+        // Start stream
+        HardwareRegisterWrite(OperationsOV534.Bridge2, 0x00);
+
+        var size = GetSize();
+
+        var bufferLength = size.GetBufferLength();
+
+        IsStreaming = true;
     }
 
     public void SensorProbe()
     {
-        var data1 = SerialCameraControlBusRegisterRead(0x0a);
+        var data1 = SerialCameraControlBusRegisterRead((RegisterOV534)0x0a);
 
-        var data2 = SerialCameraControlBusRegisterRead(0x0a);
+        var data2 = SerialCameraControlBusRegisterRead((RegisterOV534)0x0a);
 
         var sensorId = data2 << 8;
 
-        var data3 = SerialCameraControlBusRegisterRead(0x0b);
+        var data3 = SerialCameraControlBusRegisterRead((RegisterOV534)0x0b);
 
-        var data4 = SerialCameraControlBusRegisterRead(0x0b);
+        var data4 = SerialCameraControlBusRegisterRead((RegisterOV534)0x0b);
 
         var sensorId2 = sensorId | data4;
 
@@ -98,55 +135,11 @@ public partial class Ps3CamDriver
 
     public void SensorReset()
     {
-        SerialCameraControlBusRegisterWrite(0x12, 0x80);
+        SerialCameraControlBusRegisterWrite((RegisterOV534)0x12, 0x80);
     }
 
-    private bool LedStatus;
-
-    // Just because it helps testing, it works \:D/
-    public void ToggleLed()
+    public VideoSize GetSize()
     {
-        LedStatus = !LedStatus;
-        SetLed(LedStatus);
-    }
-
-    // ov534_set_led();
-    public void SetLed(bool on)
-    {
-        unchecked
-        {
-            const byte LedMask = 0x80;
-            const short LedMaskInverted = ~LedMask;
-
-            var data1 = HardwareRegisterRead(OperationsOV534.Led1);
-
-            data1 |= LedMask;
-
-            HardwareRegisterWrite(OperationsOV534.Led1, data1);
-
-
-            var data2 = HardwareRegisterRead(OperationsOV534.Led2);
-
-            if (on)
-            {
-                data2 |= LedMask;
-
-                HardwareRegisterWrite(OperationsOV534.Led2, data2);
-
-                return;
-            }
-
-            // !on
-
-            data2 &= (byte)LedMaskInverted;
-
-            HardwareRegisterWrite(OperationsOV534.Led2, data2);
-
-            var data3 = HardwareRegisterRead(OperationsOV534.Led1);
-
-            data3 &= (byte)LedMaskInverted;
-
-            HardwareRegisterWrite(OperationsOV534.Led1, data3);
-        }
+        return InternalFrameConfigurationCache.VideoSize;
     }
 }
