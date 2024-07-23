@@ -1,0 +1,3 @@
+[submodule "LibUsbDotNet"]
+	path = LibUsbDotNet
+	url = https://github.com/LibUsbDotNet/LibUsbDotNet

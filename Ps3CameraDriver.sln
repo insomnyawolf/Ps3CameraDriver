@@ -1,0 +1,51 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35111.106
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ps3CameraDriver", "Ps3CameraDriver\Ps3CameraDriver.csproj", "{39C836A9-275F-4B61-93F2-1BD61DF8C1E7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibUsbDotNet", "LibUsbDotNet\src\LibUsbDotNet\LibUsbDotNet.csproj", "{18CAD5A3-5CCE-4E8B-9239-15486462E910}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibUsbDotNet.Generator", "LibUsbDotNet\src\LibUsbDotNet.Generator\LibUsbDotNet.Generator.csproj", "{1637EABC-E4B2-495C-926B-5F8751808BED}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{39C836A9-275F-4B61-93F2-1BD61DF8C1E7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39C836A9-275F-4B61-93F2-1BD61DF8C1E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39C836A9-275F-4B61-93F2-1BD61DF8C1E7}.Debug|x64.ActiveCfg = Debug|x64
+		{39C836A9-275F-4B61-93F2-1BD61DF8C1E7}.Debug|x64.Build.0 = Debug|x64
+		{39C836A9-275F-4B61-93F2-1BD61DF8C1E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39C836A9-275F-4B61-93F2-1BD61DF8C1E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39C836A9-275F-4B61-93F2-1BD61DF8C1E7}.Release|x64.ActiveCfg = Release|x64
+		{39C836A9-275F-4B61-93F2-1BD61DF8C1E7}.Release|x64.Build.0 = Release|x64
+		{18CAD5A3-5CCE-4E8B-9239-15486462E910}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18CAD5A3-5CCE-4E8B-9239-15486462E910}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18CAD5A3-5CCE-4E8B-9239-15486462E910}.Debug|x64.ActiveCfg = Debug|x64
+		{18CAD5A3-5CCE-4E8B-9239-15486462E910}.Debug|x64.Build.0 = Debug|x64
+		{18CAD5A3-5CCE-4E8B-9239-15486462E910}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18CAD5A3-5CCE-4E8B-9239-15486462E910}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18CAD5A3-5CCE-4E8B-9239-15486462E910}.Release|x64.ActiveCfg = Release|x64
+		{18CAD5A3-5CCE-4E8B-9239-15486462E910}.Release|x64.Build.0 = Release|x64
+		{1637EABC-E4B2-495C-926B-5F8751808BED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1637EABC-E4B2-495C-926B-5F8751808BED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1637EABC-E4B2-495C-926B-5F8751808BED}.Debug|x64.ActiveCfg = Debug|x64
+		{1637EABC-E4B2-495C-926B-5F8751808BED}.Debug|x64.Build.0 = Debug|x64
+		{1637EABC-E4B2-495C-926B-5F8751808BED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1637EABC-E4B2-495C-926B-5F8751808BED}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1637EABC-E4B2-495C-926B-5F8751808BED}.Release|x64.ActiveCfg = Release|x64
+		{1637EABC-E4B2-495C-926B-5F8751808BED}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2F1BF04F-7A59-47BE-B188-567AC615B1EC}
+	EndGlobalSection
+EndGlobal
