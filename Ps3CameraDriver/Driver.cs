@@ -9,7 +9,7 @@ public partial class Ps3CamDriver
 
     private readonly IUsbDevice UsbDevice;
 
-    private InternalFrameConfiguration InternalFrameConfigurationCache;
+    private InternalFrameConfiguration InternalFrameConfigurationCache = null!;
     private FrameConfiguration FrameConfigurationCache;
     private NormalizedFrameConfig NormalizedFrameConfigurationCache;
 
@@ -60,11 +60,11 @@ public partial class Ps3CamDriver
 
     public void Initialize()
     {
-        HardwareRegisterWriteArray(Ov534_RegistrerInitData);
+        HardwareRegisterWriteArray(Ov534_RegisterInitData);
 
         SetLed(true);
 
-        SerialCameraControlBusWriteArray(Ov772x_RegistrerInitData);
+        SerialCameraControlBusWriteArray(Ov772x_RegisterInitData);
 
         HardwareRegisterWrite(OperationsOV534.Bridge2, 0x09);
 
@@ -73,7 +73,7 @@ public partial class Ps3CamDriver
         IsInitialized = true;
     }
 
-    public void Start()
+    public async Task Start()
     {
         if (!IsInitialized)
         {
@@ -98,11 +98,26 @@ public partial class Ps3CamDriver
         // Start stream
         HardwareRegisterWrite(OperationsOV534.Bridge2, 0x00);
 
-        var size = GetSize();
-
-        var bufferLength = size.GetBufferLength();
+        await StartTransfer();
 
         IsStreaming = true;
+    }
+
+    public void Stop()
+    {
+        if (!IsStreaming)
+        {
+            return;
+        }
+
+        // Stop stream
+        HardwareRegisterWrite(OperationsOV534.Bridge2, 0x09);
+
+        SetLed(false);
+
+        CloseTransfer();
+
+        IsStreaming = false;
     }
 
     public void SensorProbe()

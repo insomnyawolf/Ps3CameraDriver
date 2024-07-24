@@ -18,9 +18,9 @@ public class InternalFrameConfiguration
 {
     public VideoResolution VideoResolution { get; init; }
     public VideoSize VideoSize { get; init; }
-    public IReadOnlyList<NormalizedFrameConfig> NormalizedFrameConfig { get; init; }
-    public IReadOnlyList<Command> SensorStart { get; init; }
-    public IReadOnlyList<Command> BridgeStart { get; init; }
+    public IReadOnlyList<NormalizedFrameConfig> NormalizedFrameConfig { get; init; } = null!;
+    public IReadOnlyList<Command> SensorStart { get; init; } = null!;
+    public IReadOnlyList<Command> BridgeStart { get; init; } = null!;
 
     // _normalize_framerate()
     public NormalizedFrameConfig GetNormalizedFrameConfig(int framesPerSecond)
@@ -45,7 +45,7 @@ public class InternalFrameConfiguration
     }
 }
 
-public struct Command
+public readonly struct Command
 {
     public readonly byte Register;
     public readonly byte Value;

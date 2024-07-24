@@ -5,7 +5,7 @@ internal class Program
 {
     private static readonly UsbContext UsbContext = new UsbContext();
     //private static readonly DeviceManager DeviceManager = new DeviceManager(UsbContext);
-    static Task Main(string[] args)
+    static async Task Main(string[] args)
     {
         var device = UsbContext.Find(Ps3CamDriver.IsTargetDevice);
 
@@ -15,8 +15,8 @@ internal class Program
 
         ps3cam.ToggleLed();
 
-        ps3cam.ToggleLed();
+        await ps3cam.StartTransfer();
 
-        return Task.CompletedTask;
+        ps3cam.ToggleLed();
     }
 }

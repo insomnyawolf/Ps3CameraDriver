@@ -3,11 +3,16 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35111.106
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ps3CameraDriver", "Ps3CameraDriver\Ps3CameraDriver.csproj", "{39C836A9-275F-4B61-93F2-1BD61DF8C1E7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ps3CameraDriver", "Ps3CameraDriver\Ps3CameraDriver.csproj", "{39C836A9-275F-4B61-93F2-1BD61DF8C1E7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibUsbDotNet", "LibUsbDotNet\src\LibUsbDotNet\LibUsbDotNet.csproj", "{18CAD5A3-5CCE-4E8B-9239-15486462E910}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibUsbDotNet.Generator", "LibUsbDotNet\src\LibUsbDotNet.Generator\LibUsbDotNet.Generator.csproj", "{1637EABC-E4B2-495C-926B-5F8751808BED}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C91BF937-B8B4-4F3B-B782-06F3E01632F8}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

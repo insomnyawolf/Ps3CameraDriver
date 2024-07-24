@@ -37,7 +37,7 @@ public partial class Ps3CamDriver
         return true;
     }
 
-    public IReadOnlyList<Command> Ov534_RegistrerInitData = new List<Command>()
+    public IReadOnlyList<Command> Ov534_RegisterInitData = new List<Command>()
     {
         new Command(0xe7, 0x3a),
         // select OV772x sensor
@@ -98,7 +98,7 @@ public partial class Ps3CamDriver
         new Command(0xE5, 0x04),
     };
 
-    public IReadOnlyList<Command> Ov772x_RegistrerInitData = new List<Command>()
+    public IReadOnlyList<Command> Ov772x_RegisterInitData = new List<Command>()
     {
         // reset
         new Command(0x12, 0x80),

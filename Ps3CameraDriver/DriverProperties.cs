@@ -178,6 +178,7 @@ public partial class Ps3CamDriver
     public void SetHue(int val)
     {
         // Sorry i'm lazy atm
+#warning remember to implement this 
         throw new NotImplementedException();
     }
 
@@ -264,10 +265,10 @@ public partial class Ps3CamDriver
         SerialCameraControlBusRegisterWrite(RegisterOV534.Saturation2, val1);
     }
 
-    void SetDebug(bool value)
-    {
-        throw new NotImplementedException();
-        //usb_manager::instance().set_debug(value);
-        //_ps3eye_debug_status = value;
-    }
+    //void SetDebug(bool value)
+    //{
+    //    throw new NotImplementedException();
+    //    //usb_manager::instance().set_debug(value);
+    //    //_ps3eye_debug_status = value;
+    //}
 }
