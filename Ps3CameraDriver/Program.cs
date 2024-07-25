@@ -11,13 +11,7 @@ internal class Program
 
         var ps3cam = new Ps3CamDriver(device);
 
-        var frameConfig = new FrameConfiguration()
-        {
-            Resolution = VideoResolution.QVGA,
-            FramesPerSecond = 1,
-        };
-
-        ps3cam.Init(frameConfig);
+        ps3cam.Init(FrameConfiguration.LowResLowFramerate);
 
         //while (true)
         //{

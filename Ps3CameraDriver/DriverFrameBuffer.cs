@@ -2,22 +2,21 @@
 using LibUsbDotNet.Info;
 using LibUsbDotNet.LibUsb;
 using LibUsbDotNet.Main;
-using System.Security.Claims;
-using System.Text;
+using System.Linq.Expressions;
 
 namespace Ps3CameraDriver;
 
 public partial class Ps3CamDriver
 {
     private FrameQueue FrameQueue = null!;
+    private static readonly BayerFilter BayerFilter = new BayerFilter();
 
     private void StartTransfer()
     {
-        var size = GetSize();
+        var frameBufferSize = FrameConfigurationCache.FrameBufferSize;
+        var rawBufferSize = FrameConfigurationCache.PixelCount;
 
-        var bufferLength = size.GetBufferLength();
-
-        FrameQueue = new FrameQueue(bufferLength);
+        FrameQueue = new FrameQueue(frameBufferSize);
 
         var streamEndpoint = FindStreamEndpoint();
 
@@ -25,14 +24,22 @@ public partial class Ps3CamDriver
 
         var endpointAddress = (ReadEndpointID)streamEndpoint.EndpointAddress;
 
-        var reader = UsbDevice.OpenEndpointReader(endpointAddress, bufferSize, EndpointType.Bulk);
+        var reader = UsbDevice.OpenEndpointReader(endpointAddress, rawBufferSize, EndpointType.Bulk);
 
-        ReadStreamData(reader, bufferSize);
+        ReadStreamData(reader, rawBufferSize);
     }
+
+    private int WholeFrameCounter = 0;
+    private int OtherCounter = 0;
 
     private void ReadStreamData(UsbEndpointReader usbEndpointReader, int bufferSize)
     {
+        var fcc = FrameConfigurationCache;
+        var size = fcc.VideoSize;
+        var stride = fcc.ImageStride;
+
         Span<byte> buffer = stackalloc byte[bufferSize];
+        Span<byte> destSpan = stackalloc byte[fcc.FrameBufferSize];
 
         while (IsStreaming)
         {
@@ -45,11 +52,33 @@ public partial class Ps3CamDriver
                 throw new Exception(string.Format($"Error: '{ec}'. Bytes read: '{bytesRead}"));
             }
 
-            // Write that output to the console.
+            if (bytesRead == bufferSize)
+            {
+                // Whole Frames?
+                WholeFrameCounter++;
 
-            var raw = Convert.ToBase64String(buffer);
+                BayerFilter.ProcessFilter(size, buffer, destSpan, stride);
 
-            Console.Write(raw);
+#warning test if the filter works properly
+
+                // Write that output to the console.
+
+                var raw = Convert.ToBase64String(destSpan);
+
+                Console.Write(raw);
+            }
+            else
+            {
+                // Partial Frames ??
+                // Control Data ??
+                OtherCounter++;
+            }
+
+            Console.Write("\r                                                                                                              ");
+
+            Console.Write($"\rStats: WholeFrames:{WholeFrameCounter} Other:{OtherCounter}");
+
+            
         }
     }
 

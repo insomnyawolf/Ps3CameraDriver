@@ -46,8 +46,6 @@ public partial class Ps3CamDriver
 
     public void UpdateCameraConfiguration(FrameConfiguration frameConfiguration)
     {
-        frameConfiguration.CalculateBytesPerPixel();
-
         FrameConfigurationCache = frameConfiguration;
         
         InternalFrameConfigurationCache = FrameConfigurations[frameConfiguration.Resolution];
@@ -55,6 +53,10 @@ public partial class Ps3CamDriver
         NormalizedFrameConfigurationCache = InternalFrameConfigurationCache.GetNormalizedFrameConfig(frameConfiguration.FramesPerSecond);
 
         FrameConfigurationCache.FramesPerSecond = NormalizedFrameConfigurationCache.fps;
+
+        FrameConfigurationCache.VideoSize = InternalFrameConfigurationCache.VideoSize;
+
+        FrameConfigurationCache.Initialize();
     }
 
     // ov534_set_frame_rate
@@ -157,10 +159,5 @@ public partial class Ps3CamDriver
     public void SensorReset()
     {
         SerialCameraControlBusRegisterWrite((RegisterOV534)0x12, 0x80);
-    }
-
-    public VideoSize GetSize()
-    {
-        return InternalFrameConfigurationCache.VideoSize;
     }
 }

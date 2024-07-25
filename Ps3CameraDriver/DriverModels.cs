@@ -5,37 +5,63 @@ public struct FrameConfiguration
     public VideoResolution Resolution;
     public ColorFormat ColorFormat;
     public int FramesPerSecond;
+
+    public VideoSize VideoSize;
     public byte BytesPerPixel;
+    public int PixelCount;
+    public int FrameBufferSize;
+    /// <summary>
+    /// The stride is the number of bytes from one row of pixels in memory to the next row of pixels in memory.
+    /// </summary>
+    public int ImageStride;
+
+    //InternalFrameConfigurationCache.VideoSize
 
     public static FrameConfiguration Default => new FrameConfiguration()
     {
-        ColorFormat = ColorFormat.Gray,
+        ColorFormat = ColorFormat.RGB,
         Resolution = VideoResolution.VGA,
         FramesPerSecond = 60,
-        
     };
 
-    public void CalculateBytesPerPixel()
+    public static FrameConfiguration LowResLowFramerate => new FrameConfiguration()
+    {
+        ColorFormat = ColorFormat.RGB,
+        Resolution = VideoResolution.QVGA,
+        FramesPerSecond = 30,
+    };
+
+    public void Initialize()
     {
         BytesPerPixel = GetBytesPerPixel(ColorFormat);
+        ImageStride = BytesPerPixel * VideoSize.Width;
+        PixelCount = VideoSize.GetPixelCount();
+        FrameBufferSize = GetBufferSize();
+    }
+
+    private int GetBufferSize()
+    {
+        var size = PixelCount * BytesPerPixel;
+
+        return size;
     }
 
     private byte GetBytesPerPixel(ColorFormat colorFormat)
     {
-        if (colorFormat == ColorFormat.Bayer)
-        {
-            return 1;
-        }
+        //if (colorFormat == ColorFormat.Bayer)
+        //{
+        //    return 1;
+        //}
 
         //if (colorFormat == ColorFormat.BGR)
         //{
         //    return 3;
         //}
 
-        //if (colorFormat == ColorFormat.RGB)
-        //{
-        //    return 3;
-        //}
+        if (colorFormat == ColorFormat.RGB)
+        {
+            return 3;
+        }
 
         //if (colorFormat == ColorFormat.BGRA)
         //{
@@ -47,10 +73,10 @@ public struct FrameConfiguration
         //    return 4;
         //}
 
-        if (colorFormat == ColorFormat.Gray)
-        {
-            return 1;
-        }
+        //if (colorFormat == ColorFormat.Gray)
+        //{
+        //    return 1;
+        //}
 
         throw new NotImplementedException();
     }
@@ -127,19 +153,10 @@ public struct VideoSize
     public int Width;
     public int Height;
 
-    public int GetBufferLength()
+    public int GetPixelCount()
     {
         var res = Width * Height;
 
         return res;
-    }
-
-    public int GetBufferSize(int bitDepth)
-    {
-        var length = GetBufferLength();
-
-        var size = length * bitDepth;
-
-        return size;
     }
 };
