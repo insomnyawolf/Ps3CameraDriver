@@ -23,7 +23,7 @@ public partial class Ps3CamDriver
 
     public void Init(FrameConfiguration frameConfiguration)
     {
-        UsbDevice.Open();
+         UsbDevice.Open();
 
         var res = UsbDevice.ClaimInterface(0);
 
@@ -46,9 +46,15 @@ public partial class Ps3CamDriver
 
     public void UpdateCameraConfiguration(FrameConfiguration frameConfiguration)
     {
+        frameConfiguration.CalculateBytesPerPixel();
+
         FrameConfigurationCache = frameConfiguration;
+        
         InternalFrameConfigurationCache = FrameConfigurations[frameConfiguration.Resolution];
+        
         NormalizedFrameConfigurationCache = InternalFrameConfigurationCache.GetNormalizedFrameConfig(frameConfiguration.FramesPerSecond);
+
+        FrameConfigurationCache.FramesPerSecond = NormalizedFrameConfigurationCache.fps;
     }
 
     // ov534_set_frame_rate
@@ -73,7 +79,7 @@ public partial class Ps3CamDriver
         IsInitialized = true;
     }
 
-    public async Task Start()
+    public void Start()
     {
         if (!IsInitialized)
         {
@@ -98,9 +104,9 @@ public partial class Ps3CamDriver
         // Start stream
         HardwareRegisterWrite(OperationsOV534.Bridge2, 0x00);
 
-        await StartTransfer();
-
         IsStreaming = true;
+
+        _ = Task.Run(() => StartTransfer());
     }
 
     public void Stop()

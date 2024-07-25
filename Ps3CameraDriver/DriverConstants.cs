@@ -7,11 +7,13 @@ public partial class Ps3CamDriver
 {
     // SCCB https://www.waveshare.com/w/upload/1/14/OmniVision_Technologies_Seril_Camera_Control_Bus%28SCCB%29_Specification.pdf
     // ov534 Ps3Cam Hardware https://jim.sh/svn/jim/devl/playstation/ps3/eye/test/
+    // OV7725 Datasheet https://pdf1.alldatasheet.com/datasheet-pdf/view/312422/OMNIVISION/OV7725.html
 
     private const ushort VendorId = 0x1415;
     private const ushort ProductId = 0x2000;
 
-    private const ushort Timeout = 500;
+    private const ushort Timeout = 5000;
+    private const ushort BufferSize = 1024;
     private const int StatusCheckMaxRetry = 5;
 
     const byte BaseRequestType = (byte)RequestType.Vendor | (byte)RequestRecipient.Device;

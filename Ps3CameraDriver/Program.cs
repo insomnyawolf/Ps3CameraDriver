@@ -11,11 +11,29 @@ internal class Program
 
         var ps3cam = new Ps3CamDriver(device);
 
-        ps3cam.Init(FrameConfiguration.Default);
+        var frameConfig = new FrameConfiguration()
+        {
+            Resolution = VideoResolution.QVGA,
+            FramesPerSecond = 1,
+        };
 
-        ps3cam.ToggleLed();
+        ps3cam.Init(frameConfig);
 
-        await ps3cam.StartTransfer();
+        //while (true)
+        //{
+        //    ps3cam.ToggleLed();
+
+        //    await Task.Delay(1000);
+        //}
+
+        ps3cam.Start();
+
+        while (true)
+        {
+            await Task.Delay(1000);
+        }
+
+        ps3cam.Stop();
 
         ps3cam.ToggleLed();
     }

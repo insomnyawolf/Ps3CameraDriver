@@ -1,5 +1,9 @@
-﻿using LibUsbDotNet.Info;
+﻿using LibUsbDotNet;
+using LibUsbDotNet.Info;
+using LibUsbDotNet.LibUsb;
 using LibUsbDotNet.Main;
+using System.Security.Claims;
+using System.Text;
 
 namespace Ps3CameraDriver;
 
@@ -7,7 +11,7 @@ public partial class Ps3CamDriver
 {
     private FrameQueue FrameQueue = null!;
 
-    public async Task StartTransfer()
+    private void StartTransfer()
     {
         var size = GetSize();
 
@@ -17,8 +21,36 @@ public partial class Ps3CamDriver
 
         var streamEndpoint = FindStreamEndpoint();
 
-#warning  To do read from that endpoint
-        // var asd = UsbDevice.OpenEndpointReader(ReadEndpointID.Ep01);
+        var bufferSize = streamEndpoint.MaxPacketSize;
+
+        var endpointAddress = (ReadEndpointID)streamEndpoint.EndpointAddress;
+
+        var reader = UsbDevice.OpenEndpointReader(endpointAddress, bufferSize, EndpointType.Bulk);
+
+        ReadStreamData(reader, bufferSize);
+    }
+
+    private void ReadStreamData(UsbEndpointReader usbEndpointReader, int bufferSize)
+    {
+        Span<byte> buffer = stackalloc byte[bufferSize];
+
+        while (IsStreaming)
+        {
+            // If the device hasn't sent data in the last 5 seconds,
+            // a timeout error (ec = IoTimedOut) will occur. 
+            var ec = usbEndpointReader.Read(buffer, Timeout, out var bytesRead);
+
+            if (ec != Error.Success)
+            {
+                throw new Exception(string.Format($"Error: '{ec}'. Bytes read: '{bytesRead}"));
+            }
+
+            // Write that output to the console.
+
+            var raw = Convert.ToBase64String(buffer);
+
+            Console.Write(raw);
+        }
     }
 
 #warning I know this sucks, i will refactor it later i promise

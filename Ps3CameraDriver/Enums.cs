@@ -87,22 +87,22 @@ public enum ColorFormat : int
     /// Output in Bayer. Destination buffer must be width * height bytes
     /// </summary>
     Bayer,
-    /// <summary>
-    /// Output in BGR. Destination buffer must be width * height * 3 bytes
-    /// </summary>
-    BGR,
-    /// <summary>
-    /// Output in RGB. Destination buffer must be width * height * 3 bytes
-    /// </summary>
-    RGB,
-    /// <summary>
-    /// Output in BGRA. Destination buffer must be width * height * 4 bytes
-    /// </summary>
-    BGRA,
-    /// <summary>
-    /// Output in RGBA. Destination buffer must be width * height * 4 bytes
-    /// </summary>
-    RGBA,
+    ///// <summary>
+    ///// Output in BGR. Destination buffer must be width * height * 3 bytes
+    ///// </summary>
+    //BGR,
+    ///// <summary>
+    ///// Output in RGB. Destination buffer must be width * height * 3 bytes
+    ///// </summary>
+    //RGB,
+    ///// <summary>
+    ///// Output in BGRA. Destination buffer must be width * height * 4 bytes
+    ///// </summary>
+    //BGRA,
+    ///// <summary>
+    ///// Output in RGBA. Destination buffer must be width * height * 4 bytes
+    ///// </summary>
+    //RGBA,
     /// <summary>
     /// Output in Grayscale. Destination buffer must be width * height bytes
     /// </summary>

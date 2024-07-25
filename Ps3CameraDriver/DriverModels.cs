@@ -5,13 +5,55 @@ public struct FrameConfiguration
     public VideoResolution Resolution;
     public ColorFormat ColorFormat;
     public int FramesPerSecond;
-     
+    public byte BytesPerPixel;
+
     public static FrameConfiguration Default => new FrameConfiguration()
     {
-        ColorFormat = ColorFormat.BGR,
+        ColorFormat = ColorFormat.Gray,
         Resolution = VideoResolution.VGA,
         FramesPerSecond = 60,
+        
     };
+
+    public void CalculateBytesPerPixel()
+    {
+        BytesPerPixel = GetBytesPerPixel(ColorFormat);
+    }
+
+    private byte GetBytesPerPixel(ColorFormat colorFormat)
+    {
+        if (colorFormat == ColorFormat.Bayer)
+        {
+            return 1;
+        }
+
+        //if (colorFormat == ColorFormat.BGR)
+        //{
+        //    return 3;
+        //}
+
+        //if (colorFormat == ColorFormat.RGB)
+        //{
+        //    return 3;
+        //}
+
+        //if (colorFormat == ColorFormat.BGRA)
+        //{
+        //    return 4;
+        //}
+
+        //if (colorFormat == ColorFormat.RGBA)
+        //{
+        //    return 4;
+        //}
+
+        if (colorFormat == ColorFormat.Gray)
+        {
+            return 1;
+        }
+
+        throw new NotImplementedException();
+    }
 }
 
 public class InternalFrameConfiguration
