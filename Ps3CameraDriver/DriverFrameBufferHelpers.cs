@@ -1,4 +1,6 @@
-﻿namespace Ps3CameraDriver;
+﻿using VirtualCameraCommon;
+
+namespace Ps3CameraDriver;
 
 public partial class Ps3CamDriver
 {

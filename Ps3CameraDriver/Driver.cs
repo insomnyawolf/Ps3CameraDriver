@@ -1,4 +1,5 @@
 ﻿using LibUsbDotNet.LibUsb;
+using VirtualCameraCommon;
 
 namespace Ps3CameraDriver;
 
@@ -9,9 +10,9 @@ public partial class Ps3CamDriver
 
     private readonly IUsbDevice UsbDevice;
 
-    private InternalFrameConfiguration InternalFrameConfigurationCache = null!;
-    private FrameConfiguration FrameConfigurationCache;
-    private NormalizedFrameConfig NormalizedFrameConfigurationCache;
+    private CameraConfigurations CameraConfiguration = null!;
+    private FrameConfiguration FrameConfiguration;
+    private SensorConfiguration SensorConfiguration;
 
     private bool IsInitialized;
     private bool IsStreaming;
@@ -46,24 +47,27 @@ public partial class Ps3CamDriver
 
     public void UpdateCameraConfiguration(FrameConfiguration frameConfiguration)
     {
-        FrameConfigurationCache = frameConfiguration;
-        
-        InternalFrameConfigurationCache = FrameConfigurations[frameConfiguration.Resolution];
-        
-        NormalizedFrameConfigurationCache = InternalFrameConfigurationCache.GetNormalizedFrameConfig(frameConfiguration.FramesPerSecond);
+        var configsForTheSelectedResolution = CameraConfigurations[frameConfiguration.VideoSize];
 
-        FrameConfigurationCache.FramesPerSecond = NormalizedFrameConfigurationCache.fps;
+        var validConfig = configsForTheSelectedResolution.GetSensorConfiguration(frameConfiguration.FramesPerSecond);
 
-        FrameConfigurationCache.VideoSize = InternalFrameConfigurationCache.VideoSize;
+        var normalized = new FrameConfiguration(frameConfiguration.VideoSize, validConfig.FramesPerSecond, frameConfiguration.ColorFormat);
 
-        FrameConfigurationCache.Initialize();
+        if (normalized == FrameConfiguration)
+        {
+            return;
+        }
+
+        CameraConfiguration = configsForTheSelectedResolution;
+        FrameConfiguration = normalized;
+        SensorConfiguration = validConfig;
     }
 
     // ov534_set_frame_rate
     // validate frame rate and (if not dry run) set it
     public void ApplyNewFrameConfig()
     {
-        NormalizedFrameConfigurationCache.WriteTo(this);
+        SensorConfiguration.WriteTo(this);
     }
 
     public void Initialize()
@@ -93,9 +97,9 @@ public partial class Ps3CamDriver
             return;
         }
 
-        HardwareRegisterWriteArray(InternalFrameConfigurationCache.BridgeStart);
+        HardwareRegisterWriteArray(CameraConfiguration.BridgeStart);
 
-        SerialCameraControlBusWriteArray(InternalFrameConfigurationCache.SensorStart);
+        SerialCameraControlBusWriteArray(CameraConfiguration.SensorStart);
 
         ApplyNewFrameConfig();
 

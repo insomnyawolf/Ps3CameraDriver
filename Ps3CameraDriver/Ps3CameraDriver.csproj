@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\LibUsbDotNet\src\LibUsbDotNet\LibUsbDotNet.csproj" />
+    <ProjectReference Include="..\VirtualCameraCommon\VirtualCameraCommon.csproj" />
   </ItemGroup>
 
   <ItemGroup>

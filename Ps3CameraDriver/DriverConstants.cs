@@ -1,5 +1,6 @@
 ﻿using LibUsbDotNet;
 using LibUsbDotNet.LibUsb;
+using VirtualCameraCommon;
 
 namespace Ps3CameraDriver;
 
@@ -146,34 +147,29 @@ public partial class Ps3CamDriver
 	    new Command(0xAC, 0xBF),
     };
 
-    public static readonly IReadOnlyList<InternalFrameConfiguration> FrameConfigurationsList = new List<InternalFrameConfiguration>()
+    public static readonly IReadOnlyList<CameraConfigurations> CameraConfigurationsList = new List<CameraConfigurations>()
     {
-        new InternalFrameConfiguration()
+        new CameraConfigurations()
         {
-            VideoResolution = VideoResolution.QVGA,
-            VideoSize = new VideoSize()
+            VideoSize = VideoSize.QVGA,
+            SensorConfiguration = new SensorConfiguration[]
             {
-                Width = 320,
-                Height = 240,
-            },
-            NormalizedFrameConfig = new NormalizedFrameConfig[]
-            {
-                new NormalizedFrameConfig { fps = 290, Field1 = 0x00, Field2 = 0xc1, Field3 = 0x04 },
+                new SensorConfiguration { FramesPerSecond = 290, Field1 = 0x00, Field2 = 0xc1, Field3 = 0x04 },
                 // 205 FPS or above: video is partly corrupt
-                new NormalizedFrameConfig { fps = 205, Field1 = 0x01, Field2 = 0xc1, Field3 = 0x02 },
+                new SensorConfiguration { FramesPerSecond = 205, Field1 = 0x01, Field2 = 0xc1, Field3 = 0x02 },
                 // 187 FPS or below: video is valid
-                new NormalizedFrameConfig { fps = 187, Field1 = 0x01, Field2 = 0x81, Field3 = 0x02 },
-                new NormalizedFrameConfig { fps = 150, Field1 = 0x00, Field2 = 0x41, Field3 = 0x04 },
-                new NormalizedFrameConfig { fps = 137, Field1 = 0x02, Field2 = 0xc1, Field3 = 0x02 },
-                new NormalizedFrameConfig { fps = 125, Field1 = 0x01, Field2 = 0x41, Field3 = 0x02 },
-                new NormalizedFrameConfig { fps = 100, Field1 = 0x02, Field2 = 0xc1, Field3 = 0x04 },
-                new NormalizedFrameConfig { fps = 090, Field1 = 0x03, Field2 = 0x81, Field3 = 0x02 },
-                new NormalizedFrameConfig { fps = 075, Field1 = 0x04, Field2 = 0x81, Field3 = 0x02 },
-                new NormalizedFrameConfig { fps = 060, Field1 = 0x04, Field2 = 0xc1, Field3 = 0x04 },
-                new NormalizedFrameConfig { fps = 050, Field1 = 0x04, Field2 = 0x41, Field3 = 0x02 },
-                new NormalizedFrameConfig { fps = 040, Field1 = 0x06, Field2 = 0x81, Field3 = 0x03 },
-                new NormalizedFrameConfig { fps = 037, Field1 = 0x03, Field2 = 0x41, Field3 = 0x04 },
-                new NormalizedFrameConfig { fps = 030, Field1 = 0x04, Field2 = 0x41, Field3 = 0x04 },
+                new SensorConfiguration { FramesPerSecond = 187, Field1 = 0x01, Field2 = 0x81, Field3 = 0x02 },
+                new SensorConfiguration { FramesPerSecond = 150, Field1 = 0x00, Field2 = 0x41, Field3 = 0x04 },
+                new SensorConfiguration { FramesPerSecond = 137, Field1 = 0x02, Field2 = 0xc1, Field3 = 0x02 },
+                new SensorConfiguration { FramesPerSecond = 125, Field1 = 0x01, Field2 = 0x41, Field3 = 0x02 },
+                new SensorConfiguration { FramesPerSecond = 100, Field1 = 0x02, Field2 = 0xc1, Field3 = 0x04 },
+                new SensorConfiguration { FramesPerSecond = 090, Field1 = 0x03, Field2 = 0x81, Field3 = 0x02 },
+                new SensorConfiguration { FramesPerSecond = 075, Field1 = 0x04, Field2 = 0x81, Field3 = 0x02 },
+                new SensorConfiguration { FramesPerSecond = 060, Field1 = 0x04, Field2 = 0xc1, Field3 = 0x04 },
+                new SensorConfiguration { FramesPerSecond = 050, Field1 = 0x04, Field2 = 0x41, Field3 = 0x02 },
+                new SensorConfiguration { FramesPerSecond = 040, Field1 = 0x06, Field2 = 0x81, Field3 = 0x03 },
+                new SensorConfiguration { FramesPerSecond = 037, Field1 = 0x03, Field2 = 0x41, Field3 = 0x04 },
+                new SensorConfiguration { FramesPerSecond = 030, Field1 = 0x04, Field2 = 0x41, Field3 = 0x04 },
             },
             BridgeStart = new List<Command>()
             {
@@ -202,25 +198,20 @@ public partial class Ps3CamDriver
                 new Command(0x65, 0x2f),
             },
         },
-        new InternalFrameConfiguration()
+        new CameraConfigurations()
         {
-            VideoResolution = VideoResolution.VGA,
-            VideoSize = new VideoSize()
-            {
-                Width = 640,
-                Height = 480,
-            },
-            NormalizedFrameConfig = new NormalizedFrameConfig[]
+            VideoSize = VideoSize.VGA,
+            SensorConfiguration = new SensorConfiguration[]
             {
                 // 83 FPS: video is partly corrupt
-                new NormalizedFrameConfig { fps = 83, Field1 = 0x01, Field2 = 0xc1, Field3 = 0x02 },
+                new SensorConfiguration { FramesPerSecond = 83, Field1 = 0x01, Field2 = 0xc1, Field3 = 0x02 },
                 // 75 FPS or below: video is valid
-                new NormalizedFrameConfig { fps = 75, Field1 = 0x01, Field2 = 0x81, Field3 = 0x02 },
-                new NormalizedFrameConfig { fps = 60, Field1 = 0x00, Field2 = 0x41, Field3 = 0x04 },
-                new NormalizedFrameConfig { fps = 50, Field1 = 0x01, Field2 = 0x41, Field3 = 0x02 },
-                new NormalizedFrameConfig { fps = 40, Field1 = 0x02, Field2 = 0xc1, Field3 = 0x04 },
-                new NormalizedFrameConfig { fps = 30, Field1 = 0x04, Field2 = 0x81, Field3 = 0x02 },
-                new NormalizedFrameConfig { fps = 15, Field1 = 0x03, Field2 = 0x41, Field3 = 0x04 },
+                new SensorConfiguration { FramesPerSecond = 75, Field1 = 0x01, Field2 = 0x81, Field3 = 0x02 },
+                new SensorConfiguration { FramesPerSecond = 60, Field1 = 0x00, Field2 = 0x41, Field3 = 0x04 },
+                new SensorConfiguration { FramesPerSecond = 50, Field1 = 0x01, Field2 = 0x41, Field3 = 0x02 },
+                new SensorConfiguration { FramesPerSecond = 40, Field1 = 0x02, Field2 = 0xc1, Field3 = 0x04 },
+                new SensorConfiguration { FramesPerSecond = 30, Field1 = 0x04, Field2 = 0x81, Field3 = 0x02 },
+                new SensorConfiguration { FramesPerSecond = 15, Field1 = 0x03, Field2 = 0x41, Field3 = 0x04 },
             },
             BridgeStart = new List<Command>()
             {
@@ -251,5 +242,5 @@ public partial class Ps3CamDriver
         },
     };
 
-    public static readonly IReadOnlyDictionary<VideoResolution, InternalFrameConfiguration> FrameConfigurations = FrameConfigurationsList.ToDictionary(i => i.VideoResolution);
+    public static readonly IReadOnlyDictionary<VideoSize, CameraConfigurations> CameraConfigurations = CameraConfigurationsList.ToDictionary(i => i.VideoSize);
 }

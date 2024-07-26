@@ -2,7 +2,6 @@
 using LibUsbDotNet.Info;
 using LibUsbDotNet.LibUsb;
 using LibUsbDotNet.Main;
-using System.Linq.Expressions;
 
 namespace Ps3CameraDriver;
 
@@ -13,8 +12,8 @@ public partial class Ps3CamDriver
 
     private void StartTransfer()
     {
-        var frameBufferSize = FrameConfigurationCache.FrameBufferSize;
-        var rawBufferSize = FrameConfigurationCache.PixelCount;
+        var frameBufferSize = FrameConfiguration.FrameBufferSize;
+        var rawBufferSize = FrameConfiguration.PixelCount;
 
         FrameQueue = new FrameQueue(frameBufferSize);
 
@@ -34,9 +33,9 @@ public partial class Ps3CamDriver
 
     private void ReadStreamData(UsbEndpointReader usbEndpointReader, int bufferSize)
     {
-        var fcc = FrameConfigurationCache;
+        var fcc = FrameConfiguration;
         var size = fcc.VideoSize;
-        var stride = fcc.ImageStride;
+        var stride = fcc.Stride;
 
         Span<byte> buffer = stackalloc byte[bufferSize];
         Span<byte> destSpan = stackalloc byte[fcc.FrameBufferSize];

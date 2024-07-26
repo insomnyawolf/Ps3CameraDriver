@@ -1,5 +1,6 @@
 ﻿using LibUsbDotNet.LibUsb;
 using Ps3CameraDriver;
+using VirtualCameraCommon;
 
 internal class Program
 {

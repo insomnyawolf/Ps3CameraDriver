@@ -114,17 +114,17 @@ public partial class Ps3CamDriver
         SerialCameraControlBusRegisterWrite(RegisterOV534.Settings, val1);
     }
 
-    public void SetFramerate(int val)
-    {
-        if (IsStreaming)
-        {
-            // Bufer resizing is scary D:
-            throw new Exception("Can not change framerate while streaming");
-        }
+    //public void SetFramerate(int val)
+    //{
+    //    if (IsStreaming)
+    //    {
+    //        // Bufer resizing is scary D:
+    //        throw new Exception("Can not change framerate while streaming");
+    //    }
        
-        FrameConfigurationCache.FramesPerSecond = val;
-        NormalizedFrameConfigurationCache = InternalFrameConfigurationCache.GetNormalizedFrameConfig(FrameConfigurationCache.FramesPerSecond);
-    }
+    //    FrameConfiguration.FramesPerSecond = val;
+    //    SensorConfiguration = CameraConfiguration.GetSensorConfiguration(FrameConfiguration.FramesPerSecond);
+    //}
 
     private const byte TestPatternMask1 = 0b00000001;
     private static readonly byte TestPatternMaskInverted1 = AsByte(~TestPatternMask1);
