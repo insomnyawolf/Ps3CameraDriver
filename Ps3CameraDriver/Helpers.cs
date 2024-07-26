@@ -2,14 +2,14 @@
 
 namespace Ps3CameraDriver;
 
-public partial class Ps3CamDriver
+public static class Helpers
 {
 #warning optimize and unspaguetti this
     public static byte[] CopyToBuffer<TOrigin>(TOrigin value, byte[] buffer)
     {
         ClearBuffer(buffer);
         Unsafe.As<byte, TOrigin>(ref buffer[0]) = value;
-        return UsbBuffer;
+        return buffer;
     }
 
 #warning all the unchecked blocks may break things, better if you check before what's going on

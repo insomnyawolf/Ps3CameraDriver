@@ -1,4 +1,6 @@
 ﻿using LibUsbDotNet.LibUsb;
+using Ps3CameraDriver.Models;
+using Ps3CameraDriver.Protocol;
 using VirtualCameraCommon;
 
 namespace Ps3CameraDriver;
@@ -130,6 +132,51 @@ public partial class Ps3CamDriver
         CloseTransfer();
 
         IsStreaming = false;
+    }
+
+    private bool LedStatus;
+
+    // Just because it helps testing, it works \:D/
+    public void ToggleLed()
+    {
+        LedStatus = !LedStatus;
+        SetLed(LedStatus);
+    }
+
+    // ov534_set_led();
+    private const byte LedMask = 0x80;
+    private static readonly byte LedMaskInverted = Helpers.AsByte(~LedMask);
+    public void SetLed(bool status)
+    {
+        var data1 = HardwareRegisterRead(OperationsOV534.Led1);
+
+        data1 |= LedMask;
+
+        HardwareRegisterWrite(OperationsOV534.Led1, data1);
+
+
+        var data2 = HardwareRegisterRead(OperationsOV534.Led2);
+
+        if (status)
+        {
+            data2 |= LedMask;
+
+            HardwareRegisterWrite(OperationsOV534.Led2, data2);
+
+            return;
+        }
+
+        // !on
+
+        data2 &= LedMaskInverted;
+
+        HardwareRegisterWrite(OperationsOV534.Led2, data2);
+
+        var data3 = HardwareRegisterRead(OperationsOV534.Led1);
+
+        data3 &= LedMaskInverted;
+
+        HardwareRegisterWrite(OperationsOV534.Led1, data3);
     }
 
     public void SensorProbe()

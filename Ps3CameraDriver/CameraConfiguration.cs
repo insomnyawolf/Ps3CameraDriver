@@ -1,56 +1,47 @@
-﻿namespace Ps3CameraDriver;
+﻿using Ps3CameraDriver.Protocol;
 
-public partial class Ps3CamDriver
+namespace Ps3CameraDriver;
+
+public partial class CameraConfiguration
 {
-    private bool LedStatus;
-
-    // Just because it helps testing, it works \:D/
-    public void ToggleLed()
+    private readonly Ps3CamDriver Ps3CamDriver;
+    public CameraConfiguration(Ps3CamDriver Ps3CamDriver)
     {
-        LedStatus = !LedStatus;
-        SetLed(LedStatus);
+        this.Ps3CamDriver = Ps3CamDriver;
     }
 
-    // ov534_set_led();
-    private const byte LedMask = 0x80;
-    private static readonly byte LedMaskInverted = AsByte(~LedMask);
-    public void SetLed(bool status)
+    // sccb_reg_write();
+    public void SerialCameraControlBusRegisterWrite(RegisterOV534 register, byte value)
     {
-        var data1 = HardwareRegisterRead(OperationsOV534.Led1);
+        Ps3CamDriver.SerialCameraControlBusRegisterWrite(register, value);
+    }
 
-        data1 |= LedMask;
+    // sccb_reg_read();
+    public byte SerialCameraControlBusRegisterRead(RegisterOV534 registerAddress)
+    {
+        var data = Ps3CamDriver.SerialCameraControlBusRegisterRead(registerAddress);
 
-        HardwareRegisterWrite(OperationsOV534.Led1, data1);
+        return data;
+    }
 
+    // ov534_reg_write();
+    public void HardwareRegisterWrite(OperationsOV534 operation, byte value)
+    {
+        Ps3CamDriver.HardwareRegisterWrite(operation, value);
+    }
 
-        var data2 = HardwareRegisterRead(OperationsOV534.Led2);
+    // ov534_reg_read();
+    public byte HardwareRegisterRead(OperationsOV534 operation)
+    {
+        var data = Ps3CamDriver.HardwareRegisterRead(operation);
 
-        if (status)
-        {
-            data2 |= LedMask;
-
-            HardwareRegisterWrite(OperationsOV534.Led2, data2);
-
-            return;
-        }
-
-        // !on
-
-        data2 &= LedMaskInverted;
-
-        HardwareRegisterWrite(OperationsOV534.Led2, data2);
-
-        var data3 = HardwareRegisterRead(OperationsOV534.Led1);
-
-        data3 &= LedMaskInverted;
-
-        HardwareRegisterWrite(OperationsOV534.Led1, data3);
+        return data;
     }
 
     private const byte AutoGainMask1 = 0x04;
     private const byte AutoGainMask2 = 0x03;
-    private static readonly byte AutoGainMaskInverted1 = AsByte(~AutoGainMask1);
-    private static readonly byte AutoGainMaskInverted2 = AsByte(~AutoGainMask2);
+    private static readonly byte AutoGainMaskInverted1 = Helpers.AsByte(~AutoGainMask1);
+    private static readonly byte AutoGainMaskInverted2 = Helpers.AsByte(~AutoGainMask2);
     public void SetAutoGain(bool status)
     {
         byte val1 = SerialCameraControlBusRegisterRead(RegisterOV534.Settings);
@@ -74,8 +65,8 @@ public partial class Ps3CamDriver
 
     private const byte AutoWhiteBalanceMask1 = 0x02;
     private const byte AutoWhiteBalanceMask2 = 0x40;
-    private static readonly byte AutoWhiteBalanceMaskInverted1 = AsByte(~AutoWhiteBalanceMask1);
-    private static readonly byte AutoWhiteBalanceMaskInverted2 = AsByte(~AutoWhiteBalanceMask2);
+    private static readonly byte AutoWhiteBalanceMaskInverted1 = Helpers.AsByte(~AutoWhiteBalanceMask1);
+    private static readonly byte AutoWhiteBalanceMaskInverted2 = Helpers.AsByte(~AutoWhiteBalanceMask2);
     public void SetAutoWhiteBalance(bool status)
     {
         byte val1 = SerialCameraControlBusRegisterRead(RegisterOV534.Settings);
@@ -98,7 +89,7 @@ public partial class Ps3CamDriver
     }
 
     private const byte AutomaticExposureControlMask1 = 0x01;
-    private static readonly byte AutomaticExposureControlMaskInverted1 = AsByte(~AutoWhiteBalanceMask1);
+    private static readonly byte AutomaticExposureControlMaskInverted1 = Helpers.AsByte(~AutoWhiteBalanceMask1);
     public void SetAutomaticExposureControl(bool status)
     {
         byte val1 = SerialCameraControlBusRegisterRead(RegisterOV534.Settings);
@@ -127,7 +118,7 @@ public partial class Ps3CamDriver
     //}
 
     private const byte TestPatternMask1 = 0b00000001;
-    private static readonly byte TestPatternMaskInverted1 = AsByte(~TestPatternMask1);
+    private static readonly byte TestPatternMaskInverted1 = Helpers.AsByte(~TestPatternMask1);
     public void SetTestPattern(bool status)
     {
         byte val1 = SerialCameraControlBusRegisterRead(RegisterOV534.UnknownFrameBufferRelated);
@@ -145,8 +136,8 @@ public partial class Ps3CamDriver
 
     public void SetExposue(int val)
     {
-        var val1 = AsByte(val >> 7);
-        var val2 = AsByte(val << 1);
+        var val1 = Helpers.AsByte(val >> 7);
+        var val2 = Helpers.AsByte(val << 1);
 
         SerialCameraControlBusRegisterWrite(RegisterOV534.Exposure1, val1);
         SerialCameraControlBusRegisterWrite(RegisterOV534.Exposure2, val2);
@@ -154,7 +145,7 @@ public partial class Ps3CamDriver
 
     public void SetSharpness(int val)
     {
-        var val1 = AsByte(val);
+        var val1 = Helpers.AsByte(val);
 
         SerialCameraControlBusRegisterWrite(RegisterOV534.Sharpness1, val1);
         SerialCameraControlBusRegisterWrite(RegisterOV534.Sharpness2, val1);
@@ -162,14 +153,14 @@ public partial class Ps3CamDriver
 
     public void SetContrast(int val)
     {
-        var val1 = AsByte(val);
+        var val1 = Helpers.AsByte(val);
 
         SerialCameraControlBusRegisterWrite(RegisterOV534.Contrast, val1);
     }
 
     public void SetBrightness(int val)
     {
-        var val1 = AsByte(val);
+        var val1 = Helpers.AsByte(val);
 
         SerialCameraControlBusRegisterWrite(RegisterOV534.Brightness, val1);
     }
@@ -184,7 +175,7 @@ public partial class Ps3CamDriver
 
     public void SetBalanceBlue(int val)
     {
-        var val1 = AsByte(val);
+        var val1 = Helpers.AsByte(val);
 
         SerialCameraControlBusRegisterWrite(RegisterOV534.GainBlueChannel, val1);
         //SerialCameraControlBusRegisterWrite(RegisterOV534.BlcBlueChannelTarget, val1);
@@ -192,7 +183,7 @@ public partial class Ps3CamDriver
 
     public void SetBalanceRed(int val)
     {
-        var val1 = AsByte(val);
+        var val1 = Helpers.AsByte(val);
 
         SerialCameraControlBusRegisterWrite(RegisterOV534.GainRedChannel, val1);
         //SerialCameraControlBusRegisterWrite(RegisterOV534.BlcRedChannelTarget, val1);
@@ -200,7 +191,7 @@ public partial class Ps3CamDriver
 
     public void SetBalanceGreen(int val)
     {
-        var val1 = AsByte(val);
+        var val1 = Helpers.AsByte(val);
 
         SerialCameraControlBusRegisterWrite(RegisterOV534.GainGreenChannel, val1);
         //SerialCameraControlBusRegisterWrite(RegisterOV534.BlcGrenChannelTarget, val1);
@@ -209,7 +200,7 @@ public partial class Ps3CamDriver
     private const byte FlipMask1 = 0x0c;
     private const byte HorizontalMask = 0x40;
     private const byte VerticalMask = 0x80;
-    private static readonly byte FlipMaskInverted1 = AsByte(~FlipMask1);
+    private static readonly byte FlipMaskInverted1 = Helpers.AsByte(~FlipMask1);
     public void SetFlipStatus(bool horizontal, bool vertical)
     {
         var val1 = SerialCameraControlBusRegisterRead(RegisterOV534.UnknownFrameBufferRelated);
@@ -252,14 +243,14 @@ public partial class Ps3CamDriver
             val |= 0xF0;
         }
 
-        var data = AsByte(val);
+        var data = Helpers.AsByte(val);
 
         SerialCameraControlBusRegisterWrite(RegisterOV534.Gain, data);
     }
 
     public void SetSaturation(int val)
     {
-        var val1 = AsByte(val);
+        var val1 = Helpers.AsByte(val);
 
         SerialCameraControlBusRegisterWrite(RegisterOV534.Saturation1, val1);
         SerialCameraControlBusRegisterWrite(RegisterOV534.Saturation2, val1);

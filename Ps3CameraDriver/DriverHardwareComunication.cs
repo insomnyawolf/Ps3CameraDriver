@@ -1,4 +1,6 @@
 ﻿using LibUsbDotNet.Main;
+using Ps3CameraDriver.Models;
+using Ps3CameraDriver.Protocol;
 
 namespace Ps3CameraDriver;
 
@@ -110,7 +112,7 @@ public partial class Ps3CamDriver
         // debug("reg=0x%04x, val=0%02x", reg, val);
 
         // Can Be Optimized
-        var buffer = CopyToBuffer(value, UsbBuffer);
+        var buffer = Helpers.CopyToBuffer(value, UsbBuffer);
 
         SendControlPacket(buffer, (short)operation);
     }
@@ -139,7 +141,7 @@ public partial class Ps3CamDriver
 
     public byte ReadControlPacket(short registerAddress)
     {
-        ClearBuffer(UsbBuffer);
+        Helpers.ClearBuffer(UsbBuffer);
         var readDataLength = TransferPacket(IncomingRequestType, buferSendLength: 0, bufferLength: 1, UsbBuffer, registerAddress);
 
 #warning check if only the first byte is ever used

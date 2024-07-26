@@ -30,6 +30,6 @@ internal class Program
 
         ps3cam.Stop();
 
-        ps3cam.ToggleLed();
+        //ps3cam.ToggleLed();
     }
 }

@@ -2,11 +2,11 @@
 
 public readonly record struct VideoSize
 {
-    public readonly int Width;
-    public readonly int Height;
-    public readonly int PixelCount;
+    public readonly uint Width;
+    public readonly uint Height;
+    public readonly uint PixelCount;
 
-    public VideoSize(int Width, int Height)
+    public VideoSize(uint Width, uint Height)
     {
         this.Width = Width;
         this.Height = Height;

@@ -76,8 +76,6 @@ public partial class Ps3CamDriver
             Console.Write("\r                                                                                                              ");
 
             Console.Write($"\rStats: WholeFrames:{WholeFrameCounter} Other:{OtherCounter}");
-
-            
         }
     }
 

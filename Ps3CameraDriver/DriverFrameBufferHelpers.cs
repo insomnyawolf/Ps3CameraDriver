@@ -88,23 +88,23 @@ public class BayerFilter
     /// 
 
     //public void DebayerGrey(int Width, int Height, Span<byte> input, Span<byte> output)
-    public unsafe void ProcessFilter(VideoSize VideoSize, Span<byte> sourceData, Span<byte> destinationData, int destStride)
+    public unsafe void ProcessFilter(VideoSize VideoSize, Span<byte> sourceData, Span<byte> destinationData, uint destStride)
     {
         // get width and height
-        int width = VideoSize.Width;
-        int height = VideoSize.Height;
+        uint width = VideoSize.Width;
+        uint height = VideoSize.Height;
 
-        int widthM1 = width - 1;
-        int heightM1 = height - 1;
+        uint widthM1 = width - 1;
+        uint heightM1 = height - 1;
 
         // number of bytes from one row of pixels in memory to the next row of pixels in memory
-        int srcStride = width;
+        uint srcStride = width;
 
-        int srcOffset = srcStride - width;
-        int dstOffset = destStride - width * 3;
+        uint srcOffset = srcStride - width;
+        uint dstOffset = destStride - width * 3;
 
-        var srcIndex = 0;
-        var dstIndex = 0;
+        uint srcIndex = 0;
+        uint dstIndex = 0;
 
         // do the job
         fixed (byte* src = sourceData)

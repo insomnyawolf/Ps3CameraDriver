@@ -11,10 +11,10 @@ public readonly record struct FrameConfiguration
     /// <summary>
     /// The stride is the number of bytes from one row of pixels in memory to the next row of pixels in memory.
     /// </summary>
-    public readonly int Stride;
+    public readonly uint Stride;
     public readonly int FrameBufferSize;
     
-    public int PixelCount => VideoSize.PixelCount;
+    public int PixelCount => (int)VideoSize.PixelCount;
 
     public FrameConfiguration(VideoSize VideoSize, int FramesPerSecond, ColorFormat ColorFormat)
     {
@@ -23,7 +23,7 @@ public readonly record struct FrameConfiguration
         this.ColorFormat = ColorFormat;
         this.BytesPerPixel = GetBytesPerPixel(ColorFormat);
         this.Stride = GetStride(BytesPerPixel, VideoSize.Width);
-        this.FrameBufferSize = GetBufferSize(VideoSize.PixelCount, BytesPerPixel);
+        this.FrameBufferSize = (int)GetBufferSize(VideoSize.PixelCount, BytesPerPixel);
     }
 
     public static FrameConfiguration Default => new FrameConfiguration(
@@ -38,12 +38,12 @@ public readonly record struct FrameConfiguration
         ColorFormat: ColorFormat.RGB
     );
 
-    private static int GetStride(int BytesPerPixel, int Width)
+    private static uint GetStride(byte BytesPerPixel, uint Width)
     {
         return BytesPerPixel * Width;
     }
 
-    private static int GetBufferSize(int PixelCount, int BytesPerPixel)
+    private static uint GetBufferSize(uint PixelCount, byte BytesPerPixel)
     {
         var size = PixelCount * BytesPerPixel;
 
