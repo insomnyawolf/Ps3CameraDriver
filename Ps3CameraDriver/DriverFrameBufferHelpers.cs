@@ -1,4 +1,5 @@
-﻿using VirtualCameraCommon;
+﻿using System;
+using VirtualCameraCommon;
 
 namespace Ps3CameraDriver;
 

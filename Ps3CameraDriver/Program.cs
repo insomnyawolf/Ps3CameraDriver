@@ -12,7 +12,7 @@ internal class Program
 
         foreach (var cam in cameras) 
         { 
-            cam.Init(FrameConfiguration.VGA30);
+            cam.Init(FrameConfiguration.QVGA30);
 
             //while (true)
             //{

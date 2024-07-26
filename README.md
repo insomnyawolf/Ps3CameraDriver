@@ -21,3 +21,8 @@ Other useful commands:
 ```
 git submodule update --remote --merge
 ```
+
+The driver mostly work but i fucked up something on the debayern pattern or on the sensor init (idk whichone)
+
+WIC is a fucking nightmare, making this appear as a camera is a challenge and it's windows fault, they didnt need to make it so complicated.
+

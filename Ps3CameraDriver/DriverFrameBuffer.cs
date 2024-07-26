@@ -58,7 +58,7 @@ public partial class Ps3CamDriver
 #warning test if the filter works properly
                 BayerFilter.ProcessFilter(size, buffer, destSpan, stride);
 
-                FrameQueue.AddFrame(destSpan);
+                FrameQueue.GetBufferToWrite(destSpan);
             }
             else
             {
@@ -67,7 +67,7 @@ public partial class Ps3CamDriver
                 OtherCounter++;
             }
 
-            Console.Write("\r                                                              ");
+            //Console.Write("\r                                                              ");
 
             Console.Write($"\rStats: WholeFrames:{WholeFrameCounter} Other:{OtherCounter}");
         }
