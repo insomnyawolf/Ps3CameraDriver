@@ -7,7 +7,7 @@ namespace Ps3CameraDriver;
 
 public partial class Ps3CamDriver
 {
-    private FrameQueue FrameQueue = null!;
+    public FrameQueue FrameQueue = null!;
     private static readonly BayerFilter BayerFilter = new BayerFilter();
 
     private void StartTransfer()
@@ -56,9 +56,10 @@ public partial class Ps3CamDriver
                 // Whole Frames?
                 WholeFrameCounter++;
 
+#warning test if the filter works properly
                 BayerFilter.ProcessFilter(size, buffer, destSpan, stride);
 
-#warning test if the filter works properly
+                FrameQueue.AddFrame(destSpan);
 
                 // Write that output to the console.
 
@@ -128,75 +129,3 @@ public partial class Ps3CamDriver
 
     }
 }
-
-public class FrameQueue
-{
-    public const int MaxFramesInBuffer = 20;
-    public const int MaxLength = MaxFramesInBuffer - 1;
-    private readonly List<Stream> FrameBuffers = new();
-
-    private int WriteIndex;
-    private int ReadIndex;
-
-    public FrameQueue(int bufferSize)
-    {
-        for (int i = 0; i < MaxFramesInBuffer; i++)
-        {
-            FrameBuffers.Add(new MemoryStream(bufferSize));
-        }
-    }
-
-    // If too much frames in queue rewrite the last
-
-    public Stream AddFrame()
-    {
-        if (WriteIndex > MaxLength)
-        {
-            WriteIndex = 0;
-        }
-
-        if (ReadIndex == WriteIndex)
-        {
-            WriteIndex--;
-        }
-
-        if (WriteIndex < 0)
-        {
-            WriteIndex = MaxLength;
-        }
-
-        var frame = FrameBuffers[WriteIndex];
-
-        WriteIndex++;
-
-        frame.Position = 0;
-
-        return frame;
-    }
-
-    // If not enough frames replay the last frame
-
-    public Stream ReadFrame()
-    {
-        if (ReadIndex > MaxLength)
-        {
-            ReadIndex = 0;
-        }
-
-        if (ReadIndex == WriteIndex)
-        {
-            ReadIndex--;
-        }
-
-        if (ReadIndex < 0)
-        {
-            ReadIndex = MaxLength;
-        }
-
-        var frame = FrameBuffers[ReadIndex];
-
-        ReadIndex++;
-
-        return frame;
-    }
-};

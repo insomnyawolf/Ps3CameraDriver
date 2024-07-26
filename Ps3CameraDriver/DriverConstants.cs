@@ -12,10 +12,7 @@ public partial class Ps3CamDriver
     // ov534 Ps3Cam Hardware https://jim.sh/svn/jim/devl/playstation/ps3/eye/test/
     // OV7725 Datasheet https://pdf1.alldatasheet.com/datasheet-pdf/view/312422/OMNIVISION/OV7725.html
 
-    private const ushort VendorId = 0x1415;
-    private const ushort ProductId = 0x2000;
-
-    private const ushort Timeout = 5000;
+    private const ushort Timeout = 500;
     private const ushort BufferSize = 1024;
     private const int StatusCheckMaxRetry = 5;
 
@@ -24,23 +21,6 @@ public partial class Ps3CamDriver
     const byte IncomingRequestType = (byte)EndpointDirection.In | BaseRequestType;
 
     private static readonly byte[] UsbBuffer = new byte[64];
-
-    public static bool IsTargetDevice(IUsbDevice usbDevice)
-    {
-        var info = usbDevice.Info;
-
-        if (info.VendorId != VendorId)
-        {
-            return false;
-        }
-
-        if (info.ProductId != ProductId)
-        {
-            return false;
-        }
-
-        return true;
-    }
 
     public IReadOnlyList<Command> Ov534_RegisterInitData = new List<Command>()
     {

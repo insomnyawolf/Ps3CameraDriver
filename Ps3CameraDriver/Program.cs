@@ -4,32 +4,74 @@ using VirtualCameraCommon;
 
 internal class Program
 {
-    private static readonly UsbContext UsbContext = new UsbContext();
+
     //private static readonly DeviceManager DeviceManager = new DeviceManager(UsbContext);
     static async Task Main(string[] args)
     {
-        var device = UsbContext.Find(Ps3CamDriver.IsTargetDevice);
+        var cameras = Ps3CamDriverLoader.GetAvailableCameras();
 
-        var ps3cam = new Ps3CamDriver(device);
+        foreach (var cam in cameras) 
+        { 
+            cam.Init(FrameConfiguration.LowResLowFramerate);
 
-        ps3cam.Init(FrameConfiguration.LowResLowFramerate);
+            //while (true)
+            //{
+            //    ps3cam.ToggleLed();
 
-        //while (true)
-        //{
-        //    ps3cam.ToggleLed();
+            //    await Task.Delay(1000);
+            //}
 
-        //    await Task.Delay(1000);
-        //}
+            cam.Start();
 
-        ps3cam.Start();
+            while (true)
+            {
+                await Task.Delay(1000);
+            }
 
-        while (true)
+            cam.Stop();
+
+            //ps3cam.ToggleLed();
+        }
+    }
+}
+
+public class Ps3CamDriverLoader
+{
+    private const ushort VendorId = 0x1415;
+    private const ushort ProductId = 0x2000;
+
+    private static readonly UsbContext UsbContext = new UsbContext();
+
+    private static bool IsTargetDevice(IUsbDevice usbDevice)
+    {
+        var info = usbDevice.Info;
+
+        if (info.VendorId != VendorId)
         {
-            await Task.Delay(1000);
+            return false;
         }
 
-        ps3cam.Stop();
+        if (info.ProductId != ProductId)
+        {
+            return false;
+        }
 
-        //ps3cam.ToggleLed();
+        return true;
+    }
+
+    public static List<Ps3CamDriver> GetAvailableCameras()
+    {
+        var deviceCollection = UsbContext.FindAll(IsTargetDevice);
+
+        var drivers = new List<Ps3CamDriver>(deviceCollection.Count);
+
+        foreach (var device in deviceCollection)
+        {
+            var ps3cam = new Ps3CamDriver(device);
+
+            drivers.Add(ps3cam);
+        }
+
+        return drivers;
     }
 }
