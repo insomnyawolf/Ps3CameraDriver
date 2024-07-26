@@ -109,8 +109,8 @@ public class BayerFilter
         {
             fixed (byte* dst = destinationData)
             {
-                int[] rgbValues = new int[3];
-                int[] rgbCounters = new int[3];
+                Span<int> rgbValues = stackalloc int[3];
+                Span<int> rgbCounters = stackalloc int[3];
 
                 if (!performDemosaicing)
                 {
@@ -126,94 +126,95 @@ public class BayerFilter
                         srcIndex += srcOffset;
                         dstIndex += dstOffset;
                     }
+
+                    return;
                 }
-                else
+
+                // for each line
+                for (int y = 0; y < height; y++)
                 {
-                    // for each line
-                    for (int y = 0; y < height; y++)
+                    // for each pixel
+                    for (int x = 0; x < width; x++, srcIndex++, dstIndex += 3)
                     {
-                        // for each pixel
-                        for (int x = 0; x < width; x++, srcIndex++, dstIndex += 3)
+                        rgbValues[0] = rgbValues[1] = rgbValues[2] = 0;
+                        rgbCounters[0] = rgbCounters[1] = rgbCounters[2] = 0;
+
+                        int bayerIndex = bayerPattern[y & 1, x & 1];
+
+                        rgbValues[bayerIndex] += src[srcIndex];
+                        rgbCounters[bayerIndex]++;
+
+                        if (x != 0)
                         {
-                            rgbValues[0] = rgbValues[1] = rgbValues[2] = 0;
-                            rgbCounters[0] = rgbCounters[1] = rgbCounters[2] = 0;
+                            bayerIndex = bayerPattern[y & 1, (x - 1) & 1];
 
-                            int bayerIndex = bayerPattern[y & 1, x & 1];
+                            rgbValues[bayerIndex] += src[srcIndex + -1];
+                            rgbCounters[bayerIndex]++;
+                        }
 
-                            rgbValues[bayerIndex] += src[srcIndex];
+                        if (x != widthM1)
+                        {
+                            bayerIndex = bayerPattern[y & 1, (x + 1) & 1];
+
+                            rgbValues[bayerIndex] += src[srcIndex + 1];
+                            rgbCounters[bayerIndex]++;
+                        }
+
+                        if (y != 0)
+                        {
+                            bayerIndex = bayerPattern[(y - 1) & 1, x & 1];
+
+                            rgbValues[bayerIndex] += src[srcIndex + -srcStride];
                             rgbCounters[bayerIndex]++;
 
                             if (x != 0)
                             {
-                                bayerIndex = bayerPattern[y & 1, (x - 1) & 1];
+                                bayerIndex = bayerPattern[(y - 1) & 1, (x - 1) & 1];
 
-                                rgbValues[bayerIndex] += src[ srcIndex + -1];
+                                rgbValues[bayerIndex] += src[srcIndex + -srcStride - 1];
                                 rgbCounters[bayerIndex]++;
                             }
 
                             if (x != widthM1)
                             {
-                                bayerIndex = bayerPattern[y & 1, (x + 1) & 1];
+                                bayerIndex = bayerPattern[(y - 1) & 1, (x + 1) & 1];
 
-                                rgbValues[bayerIndex] += src[ srcIndex + 1];
+                                rgbValues[bayerIndex] += src[srcIndex + -srcStride + 1];
                                 rgbCounters[bayerIndex]++;
                             }
-
-                            if (y != 0)
-                            {
-                                bayerIndex = bayerPattern[(y - 1) & 1, x & 1];
-
-                                rgbValues[bayerIndex] += src[ srcIndex + -srcStride];
-                                rgbCounters[bayerIndex]++;
-
-                                if (x != 0)
-                                {
-                                    bayerIndex = bayerPattern[(y - 1) & 1, (x - 1) & 1];
-
-                                    rgbValues[bayerIndex] += src[ srcIndex + -srcStride - 1];
-                                    rgbCounters[bayerIndex]++;
-                                }
-
-                                if (x != widthM1)
-                                {
-                                    bayerIndex = bayerPattern[(y - 1) & 1, (x + 1) & 1];
-
-                                    rgbValues[bayerIndex] += src[ srcIndex + -srcStride + 1];
-                                    rgbCounters[bayerIndex]++;
-                                }
-                            }
-
-                            if (y != heightM1)
-                            {
-                                bayerIndex = bayerPattern[(y + 1) & 1, x & 1];
-
-                                rgbValues[bayerIndex] += src[ srcIndex + srcStride];
-                                rgbCounters[bayerIndex]++;
-
-                                if (x != 0)
-                                {
-                                    bayerIndex = bayerPattern[(y + 1) & 1, (x - 1) & 1];
-
-                                    rgbValues[bayerIndex] += src[ srcIndex + srcStride - 1];
-                                    rgbCounters[bayerIndex]++;
-                                }
-
-                                if (x != widthM1)
-                                {
-                                    bayerIndex = bayerPattern[(y + 1) & 1, (x + 1) & 1];
-
-                                    rgbValues[bayerIndex] += src[ srcIndex + srcStride + 1];
-                                    rgbCounters[bayerIndex]++;
-                                }
-                            }
-
-                            dst[dstIndex + RGB.R] = (byte)(rgbValues[RGB.R] / rgbCounters[RGB.R]);
-                            dst[dstIndex + RGB.G] = (byte)(rgbValues[RGB.G] / rgbCounters[RGB.G]);
-                            dst[dstIndex + RGB.B] = (byte)(rgbValues[RGB.B] / rgbCounters[RGB.B]);
                         }
-                        srcIndex += srcOffset;
-                        dstIndex += dstOffset;
+
+                        if (y != heightM1)
+                        {
+                            bayerIndex = bayerPattern[(y + 1) & 1, x & 1];
+
+                            rgbValues[bayerIndex] += src[srcIndex + srcStride];
+                            rgbCounters[bayerIndex]++;
+
+                            if (x != 0)
+                            {
+                                bayerIndex = bayerPattern[(y + 1) & 1, (x - 1) & 1];
+
+                                rgbValues[bayerIndex] += src[srcIndex + srcStride - 1];
+                                rgbCounters[bayerIndex]++;
+                            }
+
+                            if (x != widthM1)
+                            {
+                                bayerIndex = bayerPattern[(y + 1) & 1, (x + 1) & 1];
+
+                                rgbValues[bayerIndex] += src[srcIndex + srcStride + 1];
+                                rgbCounters[bayerIndex]++;
+                            }
+                        }
+
+                        dst[dstIndex + RGB.R] = (byte)(rgbValues[RGB.R] / rgbCounters[RGB.R]);
+                        dst[dstIndex + RGB.G] = (byte)(rgbValues[RGB.G] / rgbCounters[RGB.G]);
+                        dst[dstIndex + RGB.B] = (byte)(rgbValues[RGB.B] / rgbCounters[RGB.B]);
                     }
+
+                    srcIndex += srcOffset;
+                    dstIndex += dstOffset;
                 }
             }
         }

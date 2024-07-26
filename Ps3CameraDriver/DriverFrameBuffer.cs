@@ -63,9 +63,9 @@ public partial class Ps3CamDriver
 
                 // Write that output to the console.
 
-                var raw = Convert.ToBase64String(destSpan);
+                //var raw = Convert.ToBase64String(destSpan);
 
-                Console.Write(raw);
+                //Console.Write(raw);
             }
             else
             {
