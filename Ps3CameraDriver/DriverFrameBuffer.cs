@@ -12,10 +12,9 @@ public partial class Ps3CamDriver
 
     private void StartTransfer()
     {
-        var frameBufferSize = FrameConfiguration.FrameBufferSize;
         var rawBufferSize = FrameConfiguration.PixelCount;
 
-        FrameQueue = new FrameQueue(frameBufferSize);
+        FrameQueue = new FrameQueue(rawBufferSize);
 
         var streamEndpoint = FindStreamEndpoint();
 
@@ -35,11 +34,11 @@ public partial class Ps3CamDriver
     {
         var fcc = FrameConfiguration;
         var size = fcc.VideoSize;
+        var fccBufferSize = fcc.FrameBufferSize;
         var stride = fcc.Stride;
 
         Span<byte> buffer = stackalloc byte[bufferSize];
-        Span<byte> destSpan = stackalloc byte[fcc.FrameBufferSize];
-
+        Span<byte> destSpan = stackalloc byte[fccBufferSize];
         while (IsStreaming)
         {
             // If the device hasn't sent data in the last 5 seconds,
@@ -60,12 +59,6 @@ public partial class Ps3CamDriver
                 BayerFilter.ProcessFilter(size, buffer, destSpan, stride);
 
                 FrameQueue.AddFrame(destSpan);
-
-                // Write that output to the console.
-
-                //var raw = Convert.ToBase64String(destSpan);
-
-                //Console.Write(raw);
             }
             else
             {
@@ -74,7 +67,7 @@ public partial class Ps3CamDriver
                 OtherCounter++;
             }
 
-            Console.Write("\r                                                                                                              ");
+            Console.Write("\r                                                              ");
 
             Console.Write($"\rStats: WholeFrames:{WholeFrameCounter} Other:{OtherCounter}");
         }

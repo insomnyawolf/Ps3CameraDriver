@@ -1,34 +1,37 @@
-﻿namespace Ps3CameraDriver;
+﻿using System.Runtime.InteropServices;
+
+namespace Ps3CameraDriver;
 
 public class FrameQueue
 {
     public const int MaxFramesInBuffer = 20;
     public const int MaxLength = MaxFramesInBuffer - 1;
-    private readonly List<Stream> FrameBuffers = new();
+    private readonly List<Frame> FrameBuffers = new();
 
-    private int WriteIndex;
-    private int ReadIndex;
+    private int WriteIndex = 0;
+    private int ReadIndex = 1;
 
-    public FrameQueue(int bufferSize)
+    public FrameQueue(int pixelCount)
     {
         for (int i = 0; i < MaxFramesInBuffer; i++)
         {
-            FrameBuffers.Add(new MemoryStream(bufferSize));
+            FrameBuffers.Add(new Frame(pixelCount));
         }
     }
 
     // If too much frames in queue rewrite the last
-
-    public Stream AddFrame(Span<byte> frameBuffer)
+    public void AddFrame(Span<byte> source)
     {
-        if (WriteIndex > MaxLength)
-        {
-            WriteIndex = 0;
-        }
+        WriteIndex++;
 
         if (ReadIndex == WriteIndex)
         {
             WriteIndex--;
+        }
+
+        if (WriteIndex > MaxLength)
+        {
+            WriteIndex = 0;
         }
 
         if (WriteIndex < 0)
@@ -38,27 +41,23 @@ public class FrameQueue
 
         var frame = FrameBuffers[WriteIndex];
 
-        frame.Position = 0;
-
-        frame.Write(frameBuffer);
-
-        WriteIndex++;
-
-        return frame;
+        frame.Read(source);
     }
 
     // If not enough frames replay the last frame
 
-    public Stream ReadFrame()
+    public Frame ReadFrame()
     {
-        if (ReadIndex > MaxLength)
-        {
-            ReadIndex = 0;
-        }
+        ReadIndex++;
 
         if (ReadIndex == WriteIndex)
         {
             ReadIndex--;
+        }
+
+        if (ReadIndex > MaxLength)
+        {
+            ReadIndex = 0;
         }
 
         if (ReadIndex < 0)
@@ -68,8 +67,65 @@ public class FrameQueue
 
         var frame = FrameBuffers[ReadIndex];
 
-        ReadIndex++;
-
         return frame;
     }
 };
+
+public class Frame
+{
+    public readonly Pixel[] Pixels;
+
+    public Frame(int pixelCount)
+    {
+        Pixels = new Pixel[pixelCount];
+    }
+
+    public unsafe void Read(Span<byte> source)
+    {
+        var length = source.Length;
+
+        var pixelIndex = 0;
+        var srcIndex = 0;
+
+        fixed (Pixel* dstPtr = Pixels)
+        {
+            fixed (byte* srcPtr = &source.GetPinnableReference())
+            {
+                while (srcIndex < length)
+                {
+                    var R = srcPtr[srcIndex++];
+                    var G = srcPtr[srcIndex++];
+                    var B = srcPtr[srcIndex++];
+
+                    var temp = new Pixel(R, G, B);
+
+                    dstPtr[pixelIndex] = temp;
+                }
+            }
+        }
+    }
+}
+
+public readonly record struct Pixel
+{
+    public readonly byte R;
+    public readonly byte G;
+    public readonly byte B;
+    public Pixel(byte R, byte G, byte B)
+    {
+        this.R = R;
+        this.G = G;
+        this.B = B;
+    }
+
+    public byte GetGrey()
+    {
+        var r = R * 0.33;
+        var g = G * 0.34;
+        var b = B * 0.33;
+
+        var temp = r + g + b;
+
+        return (byte)temp;
+    }
+}

@@ -13,7 +13,6 @@ public readonly record struct FrameConfiguration
     /// </summary>
     public readonly uint Stride;
     public readonly int FrameBufferSize;
-    
     public int PixelCount => (int)VideoSize.PixelCount;
 
     public FrameConfiguration(VideoSize VideoSize, int FramesPerSecond, ColorFormat ColorFormat)
@@ -26,13 +25,25 @@ public readonly record struct FrameConfiguration
         this.FrameBufferSize = (int)GetBufferSize(VideoSize.PixelCount, BytesPerPixel);
     }
 
-    public static FrameConfiguration Default => new FrameConfiguration(
+    public static FrameConfiguration VGA60 => new FrameConfiguration(
         VideoSize: VideoSize.VGA,
         FramesPerSecond: 60,
         ColorFormat: ColorFormat.RGB
     );
 
-    public static FrameConfiguration LowResLowFramerate => new FrameConfiguration(
+    public static FrameConfiguration VGA30 => new FrameConfiguration(
+        VideoSize: VideoSize.VGA,
+        FramesPerSecond: 30,
+        ColorFormat: ColorFormat.RGB
+    );
+
+    public static FrameConfiguration QVGA60 => new FrameConfiguration(
+        VideoSize: VideoSize.QVGA,
+        FramesPerSecond: 60,
+        ColorFormat: ColorFormat.RGB
+    );
+
+    public static FrameConfiguration QVGA30 => new FrameConfiguration(
         VideoSize: VideoSize.QVGA,
         FramesPerSecond: 30,
         ColorFormat: ColorFormat.RGB
