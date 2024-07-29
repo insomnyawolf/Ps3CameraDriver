@@ -25,7 +25,7 @@ namespace VCamNetSampleSource
 
         public readonly FrameConfiguration FrameConfiguration;
 
-        private Ps3CamFrameSource _generator = new();
+        private Ps3CamFrameSourceAlt _generator = new();
 
         public MediaStream(MediaSource source, uint index)
         {

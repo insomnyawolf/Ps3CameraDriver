@@ -1,0 +1,2 @@
+explorer "C:\VCameraWorkaroundFolder\Ps3CameraDriver\VCamNetSample\bin\Debug\net9.0-windows10.0.22621.0"
+explorer "C:\VCameraWorkaroundFolder\Ps3CameraDriver\VCamNetSampleSource\bin\Debug\net9.0-windows10.0.22621.0"

@@ -11,6 +11,7 @@ public partial class Ps3CamDriver
 {
     public FrameQueue FrameQueue = null!;
     private static readonly BayerFilter BayerFilter = new BayerFilter();
+    const int StreamPadding = 456 + 500;
 
     private void StartTransfer()
     {
@@ -18,7 +19,9 @@ public partial class Ps3CamDriver
 
         var decodedSize = FrameConfiguration.FrameBufferSize;
 
-        RawBuffer = new byte[rawBufferSize + 2048];
+        RawBufferClean = new byte[rawBufferSize];
+
+        RawBuffer = new byte[rawBufferSize + StreamPadding];
 
         DecodedBuffer = new byte[decodedSize];
 
@@ -30,10 +33,12 @@ public partial class Ps3CamDriver
 
         var endpointAddress = (ReadEndpointID)streamEndpoint.EndpointAddress;
 
-        var reader = UsbDevice.OpenEndpointReader(endpointAddress, deviceBufferSize, EndpointType.Bulk);
+        UsbEndpointReader = UsbDevice.OpenEndpointReader(endpointAddress, deviceBufferSize, EndpointType.Bulk);
 
-        ReadStreamData(reader, deviceBufferSize);
+        ReadStreamData(UsbEndpointReader, deviceBufferSize);
     }
+
+    UsbEndpointReader UsbEndpointReader;
 
     private int FrameCounter = 0;
     private int Block456ByteCounter = 0;
@@ -53,6 +58,7 @@ public partial class Ps3CamDriver
     }
 
     private byte[] RawBuffer;
+    private byte[] RawBufferClean;
     private byte[] DecodedBuffer;
 
     private int Frame = 0;
@@ -60,44 +66,23 @@ public partial class Ps3CamDriver
     private void ReadOne(UsbEndpointReader usbEndpointReader, int deviceBufferSize, VideoSize size, int fccBufferSize, uint dstStride)
     {
         // I'm using stack-allocked buffers because they do not cause memory corruption errors
-        Span<byte> readBuffer = stackalloc byte[deviceBufferSize];
+        var rbl = RawBuffer.Length;
 
-        var discard = 8;
+        var ec = usbEndpointReader.Read(RawBuffer, offset: 0, count: rbl, Timeout, out var bytesRead);
 
-        if (discard > 0)
+        if (ec != Error.Success)
         {
-            var ec = usbEndpointReader.Read(readBuffer, offset: 0, count: discard, Timeout, out var bytesRead);
+            throw new Exception(string.Format($"Error: '{ec}'. Bytes read: '{bytesRead}"));
         }
 
-        int readIndex = 0;
+        //if (bytesRead == 0)
+        //{
+        //    break;
+        //}
 
-        while (true)
-        {
-            var ec = usbEndpointReader.Read(readBuffer, offset: 0, count: deviceBufferSize, Timeout, out var bytesRead);
+        var cbl = RawBufferClean.Length;
 
-            if (bytesRead < 1)
-            {
-                return;
-            }
-
-            if (ec != Error.Success)
-            {
-                throw new Exception(string.Format($"Error: '{ec}'. Bytes read: '{bytesRead}"));
-            }
-
-            var slice = readBuffer.Slice(0, bytesRead);
-
-            slice.CopyTo(new Span<byte>(RawBuffer, readIndex, bytesRead));
-
-            readIndex += bytesRead;
-
-            if (bytesRead < deviceBufferSize)
-            {
-                break;
-            }
-        }
-
-        if (readIndex < 8192)
+        if (bytesRead < cbl)
         {
             // Other data ?
             Other++;
@@ -105,18 +90,55 @@ public partial class Ps3CamDriver
         else
         {
             Frame++;
+
+            const int ratio = 3;
+
+            const int batchSizeBase = 160 * ratio;
+
+            var indexSrc = 0;
+            var indexDst = 0;
+
+            var maxLength = cbl - batchSizeBase;
+
+            while (indexDst < maxLength)
+            {
+                // padding is 456 => 38 * 12 BYTES
+                const int totalDiscard = 1 * ratio;
+                //const int discardStart = 6;
+                //const int discardStart = 8;
+                const int discardStart = totalDiscard;
+
+                indexSrc += discardStart;
+
+                var srcBuffer = new Span<byte>(RawBuffer, indexSrc, batchSizeBase);
+
+                // Advance pointer over read bytes
+                indexSrc += batchSizeBase;
+
+                var copyLength = srcBuffer.Length;
+
+                var dstBuffer = new Span<byte>(RawBufferClean, indexDst, copyLength);
+
+                srcBuffer.CopyTo(dstBuffer);
+
+                indexDst += copyLength;
+            }
+
             // number of bytes from one row of pixels in memory to the next row of pixels in memory
             // almost there, first and last pixel are not existing in bayern data so we need that to make the stride be correct
-            uint srcStride = size.Width + 2;
+            //uint srcStride = size.Width;
+            //uint srcStride = size.Width + 2;
 
 #warning test if the filter works properly
 
-            BayerFilter.ProcessFilter(size, RawBuffer, srcStride, DecodedBuffer, dstStride);
+            //BayerFilter.ProcessFilter(size, RawBuffer, srcStride, DecodedBuffer, dstStride);
 
-            var dstBuffer = FrameQueue.WriteFrame();
+            var frameBuffer = FrameQueue.WriteFrame();
 
-            DecodedBuffer.CopyTo(dstBuffer, 0);
+            RawBufferClean.CopyTo(frameBuffer, 0);
         }
+
+
 
         Console.Write($"\rStats: Frame:{Frame} Other:{Other}");
     }

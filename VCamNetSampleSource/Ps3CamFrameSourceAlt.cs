@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using DirectN;
 using Ps3CameraDriver;
@@ -16,27 +17,13 @@ public unsafe class Ps3CamFrameSourceAlt : IDisposable
     public uint Height => FrameConfiguration.VideoSize.Height;
 
     private readonly Ps3CamDriver Camera;
-    private readonly float[] ColorDivisionCache;
 
     public Ps3CamFrameSourceAlt()
     {
-        ColorDivisionCache = InitializeCache();
         Camera = Ps3CamDriverLoader.GetAvailableCameras()[0];
         Camera.Init(FrameConfiguration);
         Camera.Start();
     }
-
-    private static float[] InitializeCache()
-    {
-        var cache = new float[byte.MaxValue];
-        for (var i = 0; i < cache.Length; i++)
-        {
-            cache[i] = i / 255f;
-        }
-
-        return cache;
-    }
-
 
     public const float DIVISOR = 20;
 
@@ -161,8 +148,6 @@ public unsafe class Ps3CamFrameSourceAlt : IDisposable
         }
     }
 
-    //private readonly Dictionary<Pixel, IComObject<ID2D1SolidColorBrush>> BrushCache = new ();
-
     public IComObject<IMFSample> Generate(IComObject<IMFSample> sample, Guid format)
     {
         try
@@ -175,50 +160,57 @@ public unsafe class Ps3CamFrameSourceAlt : IDisposable
             {
                 _renderTarget.BeginDraw();
 
-                //var frame = Camera.FrameQueue.ReadFrame();
-                //var pixels = frame.Pixels;
+                var fq = Camera.FrameQueue;
 
-                ////var pixels = new Pixel[10000];
+                var frame = fq.StartReadFrame();
 
-                //var x = 0;
-                //var y = 0;
-                //var index = 0;
+                var bl = frame.Length;
+                //_renderTarget.Clear(new _D3DCOLORVALUE(0.5f, 0, 1, 1));
 
-                //while (index < pixels.Length)
-                //{
-                //    var px = pixels[index];
+                var index = 0;
+                var x = 0;
+                var y = 0;
 
-                //    if (!BrushCache.TryGetValue(px, out var value))
-                //    {
-                //        var color = _D3DCOLORVALUE.FromArgb(px.R, px.G, px.B);
-                //        value = _renderTarget.CreateSolidColorBrush(color);
-                //        BrushCache[px] = value;
-                //    }
+                fixed (byte* buffer = frame)
+                {
+                    while (index < bl)
+                    {
+                        var rect = new D2D_RECT_F(x, y, x + 1, y + 1);
 
-                //    _renderTarget.DrawRectangle(new D2D_RECT_F(x, y, x + 1, y + 1), value);
+                        var grey = buffer[index++];
 
-                //    x++;
+                        var colorRaw = new Vector3(grey, grey, grey);
 
-                //    if (x == Width)
-                //    {
-                //        x = 0;
-                //        y++;
-                //    }
+                        var colorNormalized = colorRaw / 255;
 
-                //    index++;
-                //}
+                        var color = new _D3DCOLORVALUE(colorNormalized.X, colorNormalized.Y, colorNormalized.Z);
 
-                _renderTarget.Clear(new _D3DCOLORVALUE(0.5f, 0, 1, 1));
+                        var brush = _renderTarget.CreateSolidColorBrush(color, null);
 
-                //var frame = Camera.FrameQueue.ReadFrame();
+                        _renderTarget.DrawRectangle(rect, brush);
 
-                //var imageBuffer = frame.GetBuffer();
+                        x++;
+                        if (x == Width)
+                        {
+                            x = 0;
+                            y++;
+                        }
+                    }
+                }
 
-                //var b2 = WICImagingFactory.CreateBitmapFromMemory((int)Width, (int)Height, WICConstants.GUID_WICPixelFormat24bppRGB, (int)Width * 3, imageBuffer);
+                fq.FinishReadFrame();
+                //var b2 = WICImagingFactory.CreateBitmapFromMemory((int)Width, (int)Height, WICConstants.GUID_WICPixelFormat24bppRGB, (int)FrameConfiguration.Stride, imageBuffer);
 
                 //var content = b2.Object;
 
-                //_renderTarget.Object.CreateBitmapFromWicBitmap(content, IntPtr.Zero, out ID2D1Bitmap bitmap);
+                //HRESULT result = _renderTarget.Object.CreateBitmapFromWicBitmap(content, IntPtr.Zero, out ID2D1Bitmap bitmap);
+
+                //if (result.IsError)
+                //{
+                //    throw new Exception(result.Name);
+                //}
+
+                //_renderTarget.Object.CreateBitmapBrush(bitmap, IntPtr.Zero, IntPtr.Zero, out var brush);
 
                 //var rect = new D2D_RECT_F(0, 0, Width, Height);
 

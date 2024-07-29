@@ -17,7 +17,7 @@ public partial class Ps3CamDriver
     private SensorConfiguration SensorConfiguration;
 
     private bool IsInitialized;
-    private bool IsStreaming;
+    public bool IsStreaming;
 
     public Ps3CamDriver(IUsbDevice IUsbDevice)
     {
@@ -114,7 +114,22 @@ public partial class Ps3CamDriver
 
         IsStreaming = true;
 
-        _ = Task.Run(() => StartTransfer());
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                StartTransfer();
+            }
+            catch
+            {
+
+            }
+            finally
+            {
+                UsbDevice.Close();
+                IsStreaming = false;
+            }
+        });
     }
 
     public void Stop()
