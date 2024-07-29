@@ -41,6 +41,8 @@ public class FrameQueue
 
         var frame = FrameBuffers[WriteIndex];
 
+        frame.Position = 0;
+
         frame.Write(buffer);
     }
 
@@ -66,6 +68,8 @@ public class FrameQueue
         }
 
         var frame = FrameBuffers[ReadIndex];
+
+        frame.Position = 0;
 
         return frame;
     }

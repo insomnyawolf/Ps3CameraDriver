@@ -22,7 +22,7 @@ public partial class Ps3CamDriver
 
 public class BayerFilter
 {
-    private bool performDemosaicing = true;
+    private bool performDemosaicing = !true;
     private int[,] bayerPattern = new int[2, 2]
     {
         { RGB.G, RGB.R },
