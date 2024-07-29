@@ -126,8 +126,8 @@ public partial class Ps3CamDriver
             }
             finally
             {
-                UsbDevice.Close();
-                IsStreaming = false;
+                
+                Stop();
             }
         });
     }
@@ -145,6 +145,10 @@ public partial class Ps3CamDriver
         SetLed(false);
 
         CloseTransfer();
+
+        UsbDevice.ReleaseInterface(0);
+
+        UsbDevice.Close();
 
         IsStreaming = false;
     }

@@ -11,7 +11,7 @@ public partial class Ps3CamDriver
 {
     public FrameQueue FrameQueue = null!;
     private static readonly BayerFilter BayerFilter = new BayerFilter();
-    const int StreamPadding = 456 + 500;
+    const int StreamPadding = 456;
 
     private void StartTransfer()
     {
@@ -80,9 +80,7 @@ public partial class Ps3CamDriver
         //    break;
         //}
 
-        var cbl = RawBufferClean.Length;
-
-        if (bytesRead < cbl)
+        if (bytesRead != rbl)
         {
             // Other data ?
             Other++;
@@ -91,26 +89,35 @@ public partial class Ps3CamDriver
         {
             Frame++;
 
-            const int ratio = 3;
+            // padding is 456 => 38 * 12 BYTES
+            const int ratio = 12;
 
+            // Magic number
             const int batchSizeBase = 160 * ratio;
 
             var indexSrc = 0;
             var indexDst = 0;
 
+            var cbl = RawBufferClean.Length;
             var maxLength = cbl - batchSizeBase;
 
             while (indexDst < maxLength)
             {
-                // padding is 456 => 38 * 12 BYTES
                 const int totalDiscard = 1 * ratio;
-                //const int discardStart = 6;
-                //const int discardStart = 8;
                 const int discardStart = totalDiscard;
 
-                indexSrc += discardStart;
+                var batchSize = batchSizeBase;
 
-                var srcBuffer = new Span<byte>(RawBuffer, indexSrc, batchSizeBase);
+                indexSrc += discardStart;
+                batchSize -= discardStart;
+
+                if (indexSrc + batchSize > rbl)
+                {
+                    // Ignore ending padding
+                    batchSize -= discardStart;
+                }
+
+                var srcBuffer = new Span<byte>(RawBuffer, indexSrc, batchSize);
 
                 // Advance pointer over read bytes
                 indexSrc += batchSizeBase;

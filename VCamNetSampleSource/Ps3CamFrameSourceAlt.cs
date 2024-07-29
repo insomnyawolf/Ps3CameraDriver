@@ -190,6 +190,7 @@ public unsafe class Ps3CamFrameSourceAlt : IDisposable
                         _renderTarget.DrawRectangle(rect, brush);
 
                         x++;
+
                         if (x == Width)
                         {
                             x = 0;
