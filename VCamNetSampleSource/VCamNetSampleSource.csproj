@@ -18,8 +18,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\..\Ps3CameraDriver\Ps3CameraDriver.csproj" />
-	  <ProjectReference Include="..\..\VirtualCameraCommon\VirtualCameraCommon.csproj" />
+	  <ProjectReference Include="..\Ps3CameraDriver\Ps3CameraDriver.csproj" />
+	  <ProjectReference Include="..\VirtualCameraCommon\VirtualCameraCommon.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="RegisterCameraOutput.cmd">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 </Project>
