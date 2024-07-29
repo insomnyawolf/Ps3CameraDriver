@@ -4,23 +4,23 @@ namespace Ps3CameraDriver;
 
 public class FrameQueue
 {
-    public const int MaxFramesInBuffer = 50;
+    public const int MaxFramesInBuffer = 5;
     public const int MaxLength = MaxFramesInBuffer - 1;
-    private readonly List<MemoryStream> FrameBuffers = new();
+    private readonly List<byte[]> FrameBuffers = new();
 
     private int WriteIndex = 0;
     private int ReadIndex = 1;
 
-    public FrameQueue(int bufferSize, int maxBuffers)
+    public FrameQueue(int bufferSize)
     {
         for (int i = 0; i < MaxFramesInBuffer; i++)
         {
-            FrameBuffers.Add(new MemoryStream(bufferSize));
+            FrameBuffers.Add(new byte[bufferSize]);
         }
     }
 
     // If too much frames in queue rewrite the last
-    public void GetBufferToWrite(Span<byte> buffer)
+    public byte[] WriteFrame()
     {
         WriteIndex++;
 
@@ -41,14 +41,14 @@ public class FrameQueue
 
         var frame = FrameBuffers[WriteIndex];
 
-        frame.Position = 0;
+        //frame.Position = 0;
 
-        frame.Write(buffer);
+        return frame;
     }
 
     // If not enough frames replay the last frame
 
-    public MemoryStream ReadFrame()
+    public byte[] StartReadFrame()
     {
         ReadIndex++;
 
@@ -69,9 +69,12 @@ public class FrameQueue
 
         var frame = FrameBuffers[ReadIndex];
 
-        frame.Position = 0;
-
         return frame;
+    }
+
+    public void FinishReadFrame()
+    {
+        ReadIndex++;
     }
 };
 

@@ -160,18 +160,18 @@ public unsafe class Ps3CamFrameSource : IDisposable
             {
                 _renderTarget.BeginDraw();
 
-                var frame = Camera.FrameQueue.ReadFrame();
+                var fq = Camera.FrameQueue;
 
-                var imageBuffer = frame.GetBuffer();
+                var frame = fq.StartReadFrame();
 
-                var bl = imageBuffer.Length;
+                var bl = frame.Length;
                 //_renderTarget.Clear(new _D3DCOLORVALUE(0.5f, 0, 1, 1));
 
                 var index = 0;
                 var x = 0;
                 var y = 0;
 
-                fixed (byte* buffer = imageBuffer)
+                fixed (byte* buffer = frame)
                 {
                     while (index < bl)
                     {
@@ -199,6 +199,8 @@ public unsafe class Ps3CamFrameSource : IDisposable
                         }
                     }
                 }
+
+                fq.FinishReadFrame();
                 //var b2 = WICImagingFactory.CreateBitmapFromMemory((int)Width, (int)Height, WICConstants.GUID_WICPixelFormat24bppRGB, (int)FrameConfiguration.Stride, imageBuffer);
 
                 //var content = b2.Object;

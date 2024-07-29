@@ -12,7 +12,8 @@ internal class Program
 
         foreach (var cam in cameras) 
         { 
-            cam.Init(FrameConfiguration.QVGA30);
+            cam.Init(FrameConfiguration.VGA60);
+            //cam.Init(FrameConfiguration.QVGA30);
 
             //while (true)
             //{
@@ -27,8 +28,11 @@ internal class Program
             {
                 await Task.Delay(1000);
 
-                var frame = cam.FrameQueue.ReadFrame();
+                var fq = cam.FrameQueue;
 
+                var frame = fq.StartReadFrame();
+
+                fq.FinishReadFrame();
             }
 
             cam.Stop();

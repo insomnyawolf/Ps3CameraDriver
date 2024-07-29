@@ -21,7 +21,7 @@ public partial class Ps3CamDriver
 
 public class BayerFilter
 {
-    private bool performDemosaicing = true;
+    private bool performDemosaicing = !true;
     private int[,] bayerPattern = new int[2, 2]
     {
         { RGB.G, RGB.R },
@@ -88,7 +88,7 @@ public class BayerFilter
     /// 
 
     //public void DebayerGrey(int Width, int Height, Span<byte> input, Span<byte> output)
-    public unsafe void ProcessFilter(VideoSize VideoSize, Span<byte> sourceData, uint srcStride, Span<byte> destinationData, uint destStride)
+    public unsafe void ProcessFilter(VideoSize VideoSize, byte[] sourceData, uint srcStride, byte[] destinationData, uint destStride)
     {
         // get width and height
         uint width = VideoSize.Width;
@@ -128,7 +128,9 @@ public class BayerFilter
                             // index + 2
                             dst[dstIndex + RGB.R] = 0;
 
-                            dst[dstIndex + bayerPattern[y & 1, x & 1]] = src[srcIndex];
+                            var value = src[srcIndex];
+
+                            dst[dstIndex + bayerPattern[y & 1, x & 1]] = value;
                         }
                         srcIndex += srcOffset;
                         dstIndex += dstOffset;
