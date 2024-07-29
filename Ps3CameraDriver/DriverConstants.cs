@@ -1,5 +1,4 @@
 ﻿using LibUsbDotNet;
-using LibUsbDotNet.LibUsb;
 using Ps3CameraDriver.Models;
 using Ps3CameraDriver.Protocol;
 using VirtualCameraCommon;

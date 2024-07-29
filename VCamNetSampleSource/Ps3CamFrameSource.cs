@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using DirectN;
 using Ps3CameraDriver;
@@ -174,13 +175,17 @@ public unsafe class Ps3CamFrameSource : IDisposable
                 {
                     while (index < bl)
                     {
+                        var rect = new D2D_RECT_F(x, y, x + 1, y + 1);
+
                         var r = buffer[index++];
                         var g = buffer[index++];
                         var b = buffer[index++];
 
-                        var rect = new D2D_RECT_F(x, y, 1, 1);
+                        var colorRaw = new Vector3(r, g, b);
 
-                        var color = new _D3DCOLORVALUE(r / 255f, g / 255f, b / 255f);
+                        var colorNormalized = colorRaw / 255;
+
+                        var color = new _D3DCOLORVALUE(colorNormalized.X, colorNormalized.Y, colorNormalized.Z);
 
                         var brush = _renderTarget.CreateSolidColorBrush(color, null);
 

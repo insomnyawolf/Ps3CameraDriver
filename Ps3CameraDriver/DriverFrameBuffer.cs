@@ -37,6 +37,8 @@ public partial class Ps3CamDriver
         var fccBufferSize = fcc.FrameBufferSize;
         var stride = fcc.Stride;
 
+
+        // I'm using stack-allocked buffers because they do not cause memory corruption errors
         Span<byte> buffer = stackalloc byte[bufferSize];
         Span<byte> destSpan = stackalloc byte[fccBufferSize];
         while (IsStreaming)

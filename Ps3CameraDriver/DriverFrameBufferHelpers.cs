@@ -1,5 +1,4 @@
-﻿using System;
-using VirtualCameraCommon;
+﻿using VirtualCameraCommon;
 
 namespace Ps3CameraDriver;
 
@@ -123,7 +122,13 @@ public class BayerFilter
                         // for each pixel
                         for (int x = 0; x < width; x++, srcIndex++, dstIndex += 3)
                         {
-                            dst[dstIndex + RGB.R] = dst[dstIndex + RGB.G] = dst[dstIndex + RGB.B] = 0;
+                            // index + 0
+                            dst[dstIndex + RGB.B] = 0;
+                            // index + 1
+                            dst[dstIndex + RGB.G] = 0;
+                            // index + 2
+                            dst[dstIndex + RGB.R] = 0;
+
                             dst[dstIndex + bayerPattern[y & 1, x & 1]] = src[srcIndex];
                         }
                         srcIndex += srcOffset;

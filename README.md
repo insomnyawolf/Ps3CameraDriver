@@ -34,5 +34,14 @@ WIC is a fucking nightmare, making this appear as a camera is a challenge and it
 
 May need some help
 
-* De-vayer firler not working properly
-* Camera output performance is low (i am trying to optimize it but for some reason it breaks when i try to do so ;-;)
+### Camera image decoding issue
+
+De-bayer filter may not working properly
+
+Maybe i am not reading the sensor data properly lol
+
+Even with a simple filter the image is broken, looks like it gets shifted each couple rows a bit
+
+### Camera output performance is bad
+
+I am trying to optimize it but for some reason it breaks when i try to do so ;-;
