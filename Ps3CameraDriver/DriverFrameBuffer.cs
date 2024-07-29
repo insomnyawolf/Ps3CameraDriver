@@ -2,6 +2,7 @@
 using LibUsbDotNet.Info;
 using LibUsbDotNet.LibUsb;
 using LibUsbDotNet.Main;
+using VirtualCameraCommon;
 
 namespace Ps3CameraDriver;
 
@@ -14,7 +15,7 @@ public partial class Ps3CamDriver
     {
         var rawBufferSize = FrameConfiguration.PixelCount;
 
-        FrameQueue = new FrameQueue(rawBufferSize);
+        FrameQueue = new FrameQueue(rawBufferSize, MaxFramesInBuffer);
 
         var streamEndpoint = FindStreamEndpoint();
 
@@ -29,50 +30,80 @@ public partial class Ps3CamDriver
 
     private int WholeFrameCounter = 0;
     private int OtherCounter = 0;
+    private int Tail = 0;
+
+    public struct ReadFrameConfig
+    {
+        public uint Stride;
+        public int DstBufferSize;
+        public int SrcBufferSize;
+    }
 
     private void ReadStreamData(UsbEndpointReader usbEndpointReader, int bufferSize)
     {
         var fcc = FrameConfiguration;
         var size = fcc.VideoSize;
         var fccBufferSize = fcc.FrameBufferSize;
-        var stride = fcc.Stride;
+        var dstStride = fcc.Stride;
 
-
-        // I'm using stack-allocked buffers because they do not cause memory corruption errors
-        Span<byte> buffer = stackalloc byte[bufferSize];
-        Span<byte> destSpan = stackalloc byte[fccBufferSize];
         while (IsStreaming)
         {
-            // If the device hasn't sent data in the last 5 seconds,
-            // a timeout error (ec = IoTimedOut) will occur. 
-            var ec = usbEndpointReader.Read(buffer, Timeout, out var bytesRead);
+            ReadOne(usbEndpointReader, bufferSize, size, fccBufferSize, dstStride);
+        }
+    }
 
-            if (ec != Error.Success)
-            {
-                throw new Exception(string.Format($"Error: '{ec}'. Bytes read: '{bytesRead}"));
-            }
+    private void ReadOne(UsbEndpointReader usbEndpointReader, int bufferSize, VideoSize size, int fccBufferSize, uint dstStride)
+    {
+        // I'm using stack-allocked buffers because they do not cause memory corruption errors
+        Span<byte> destSpan = stackalloc byte[fccBufferSize];
 
-            if (bytesRead == bufferSize)
-            {
-                // Whole Frames?
-                WholeFrameCounter++;
+        // Image data
+
+        //Console.WriteLine("Reading Frame");
+
+        Span<byte> buffer = stackalloc byte[bufferSize];
+
+        var ec = usbEndpointReader.Read(buffer, offset: 0, count: bufferSize, Timeout, out var bytesRead);
+
+        // ??
+        //if (bytesRead == 0)
+        //{
+        //    return;
+        //}
+
+        if (ec != Error.Success)
+        {
+            throw new Exception(string.Format($"Error: '{ec}'. Bytes read: '{bytesRead}"));
+        }
+
+        if (bytesRead == bufferSize)
+        {
+            // Whole Frames?
+            WholeFrameCounter++;
+
+
+            // number of bytes from one row of pixels in memory to the next row of pixels in memory
+            // almost there, first and last pixel are not existing in bayern data so we need that to make the stride be correct
+            uint srcStride = size.Width + 2;
 
 #warning test if the filter works properly
-                BayerFilter.ProcessFilter(size, buffer, destSpan, stride);
+            BayerFilter.ProcessFilter(size, buffer, srcStride, destSpan, dstStride);
 
-                FrameQueue.GetBufferToWrite(destSpan);
-            }
-            else
-            {
-                // Partial Frames ??
-                // Control Data ??
-                OtherCounter++;
-            }
-
-            //Console.Write("\r                                                              ");
-
-            Console.Write($"\rStats: WholeFrames:{WholeFrameCounter} Other:{OtherCounter}");
+            FrameQueue.GetBufferToWrite(destSpan);
         }
+        else
+        {
+            // Partial Frames ??
+            // Control Data ??
+            // Possible errors
+            OtherCounter++;
+        }
+
+        Tail = (Tail + 1) % MaxFramesInBuffer;
+
+        //Console.Write("\r                                                              ");
+
+        Console.Write($"\rStats: WholeFrames:{WholeFrameCounter} Other:{OtherCounter} Tail:{Tail}");
     }
 
 #warning I know this sucks, i will refactor it later i promise

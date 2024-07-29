@@ -21,7 +21,7 @@ public partial class Ps3CamDriver
 
 public class BayerFilter
 {
-    private bool performDemosaicing = !true;
+    private bool performDemosaicing = true;
     private int[,] bayerPattern = new int[2, 2]
     {
         { RGB.G, RGB.R },
@@ -88,7 +88,7 @@ public class BayerFilter
     /// 
 
     //public void DebayerGrey(int Width, int Height, Span<byte> input, Span<byte> output)
-    public unsafe void ProcessFilter(VideoSize VideoSize, Span<byte> sourceData, Span<byte> destinationData, uint destStride)
+    public unsafe void ProcessFilter(VideoSize VideoSize, Span<byte> sourceData, uint srcStride, Span<byte> destinationData, uint destStride)
     {
         // get width and height
         uint width = VideoSize.Width;
@@ -97,10 +97,9 @@ public class BayerFilter
         uint widthM1 = width - 1;
         uint heightM1 = height - 1;
 
-        // number of bytes from one row of pixels in memory to the next row of pixels in memory
-        uint srcStride = width;
-
         uint srcOffset = srcStride - width;
+
+        // *3  Bith depth
         uint dstOffset = destStride - width * 3;
 
         uint srcIndex = 0;
@@ -144,8 +143,15 @@ public class BayerFilter
                     // for each pixel
                     for (int x = 0; x < width; x++, srcIndex++, dstIndex += 3)
                     {
-                        rgbValues[0] = rgbValues[1] = rgbValues[2] = 0;
-                        rgbCounters[0] = rgbCounters[1] = rgbCounters[2] = 0;
+                        // 0
+                        rgbValues[RGB.B] = 0;
+                        rgbCounters[RGB.B] = 0;
+                        // 1
+                        rgbValues[RGB.G] = 0;
+                        rgbCounters[RGB.G] = 0;
+                        // 2
+                        rgbValues[RGB.R] = 0;
+                        rgbCounters[RGB.R] = 0;
 
                         int bayerIndex = bayerPattern[y & 1, x & 1];
 

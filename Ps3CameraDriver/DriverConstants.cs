@@ -14,6 +14,7 @@ public partial class Ps3CamDriver
     private const ushort Timeout = 500;
     private const ushort BufferSize = 1024;
     private const int StatusCheckMaxRetry = 5;
+    private const int MaxFramesInBuffer = 50;
 
     const byte BaseRequestType = (byte)RequestType.Vendor | (byte)RequestRecipient.Device;
     const byte OutgoingRequestType = (byte)EndpointDirection.Out | BaseRequestType;
