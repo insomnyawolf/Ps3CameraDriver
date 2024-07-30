@@ -314,6 +314,7 @@ public unsafe class Ps3CamFrameSource : IDisposable
                         dxgiManager.Object.CloseDeviceHandle(_deviceHandle);
                     }
 
+                    Camera.Stop();
                     _bitmap.SafeDispose();
                     _texture.SafeDispose();
                     _renderTarget.SafeDispose();

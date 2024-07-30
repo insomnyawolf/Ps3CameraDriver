@@ -26,7 +26,12 @@ public partial class Ps3CamDriver
 
     public void Init(FrameConfiguration frameConfiguration)
     {
-         UsbDevice.Open();
+        if (!UsbDevice.TryOpen())
+        {
+            throw new Exception("Can not open the device");
+        }
+
+        UsbDevice.ResetDevice();
 
         var res = UsbDevice.ClaimInterface(0);
 
@@ -143,8 +148,6 @@ public partial class Ps3CamDriver
         HardwareRegisterWrite(OperationsOV534.Bridge2, 0x09);
 
         SetLed(false);
-
-        CloseTransfer();
 
         UsbDevice.ReleaseInterface(0);
 

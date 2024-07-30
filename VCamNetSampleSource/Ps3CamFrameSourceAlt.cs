@@ -148,6 +148,7 @@ public unsafe class Ps3CamFrameSourceAlt : IDisposable
         }
     }
 
+    private Dictionary<byte, IComObject<ID2D1SolidColorBrush>> Cache = new();
     public IComObject<IMFSample> Generate(IComObject<IMFSample> sample, Guid format)
     {
         try
@@ -179,13 +180,18 @@ public unsafe class Ps3CamFrameSourceAlt : IDisposable
 
                         var grey = buffer[index++];
 
-                        var colorRaw = new Vector3(grey, grey, grey);
+                        if (!Cache.TryGetValue(grey, out var brush))
+                        {
+                            var colorRaw = new Vector3(grey, grey, grey);
 
-                        var colorNormalized = colorRaw / 255;
+                            var colorNormalized = colorRaw / 255;
 
-                        var color = new _D3DCOLORVALUE(colorNormalized.X, colorNormalized.Y, colorNormalized.Z);
+                            var color = new _D3DCOLORVALUE(colorNormalized.X, colorNormalized.Y, colorNormalized.Z);
 
-                        var brush = _renderTarget.CreateSolidColorBrush(color, null);
+                            brush = _renderTarget.CreateSolidColorBrush(color, null);
+
+                            Cache[grey] = brush;
+                        }
 
                         _renderTarget.DrawRectangle(rect, brush);
 
@@ -313,6 +319,7 @@ public unsafe class Ps3CamFrameSourceAlt : IDisposable
                         dxgiManager.Object.CloseDeviceHandle(_deviceHandle);
                     }
 
+                    Camera.Stop();
                     _bitmap.SafeDispose();
                     _texture.SafeDispose();
                     _renderTarget.SafeDispose();

@@ -10,9 +10,11 @@ public class FrameQueue
 
     private int WriteIndex = 0;
     private int ReadIndex = 1;
-
-    public FrameQueue(int bufferSize)
+    private Ps3CamDriver Ps3CamDriver;
+    public FrameQueue(int bufferSize, Ps3CamDriver Ps3CamDriver)
     {
+        this.Ps3CamDriver = Ps3CamDriver;
+
         for (int i = 0; i < MaxFramesInBuffer; i++)
         {
             FrameBuffers.Add(new byte[bufferSize]);
@@ -50,6 +52,11 @@ public class FrameQueue
 
     public byte[] StartReadFrame()
     {
+        if (!Ps3CamDriver.IsStreaming)
+        {
+            throw new Exception("Error, camera not streaming");
+        }
+        
         ReadIndex++;
 
         if (ReadIndex == WriteIndex)
