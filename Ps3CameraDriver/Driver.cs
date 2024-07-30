@@ -31,8 +31,6 @@ public partial class Ps3CamDriver
             throw new Exception("Can not open the device");
         }
 
-        UsbDevice.ResetDevice();
-
         var res = UsbDevice.ClaimInterface(0);
 
         UpdateCameraConfiguration(frameConfiguration);

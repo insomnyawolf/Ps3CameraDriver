@@ -2,6 +2,7 @@
 using LibUsbDotNet.Info;
 using LibUsbDotNet.LibUsb;
 using LibUsbDotNet.Main;
+using System.Diagnostics;
 using VirtualCameraCommon;
 
 namespace Ps3CameraDriver;
@@ -18,9 +19,9 @@ public partial class Ps3CamDriver
 
         var decodedSize = FrameConfiguration.FrameBufferSize;
 
-        RawBufferClean = new byte[rawBufferSize];
-
         RawBuffer = new byte[rawBufferSize + StreamPadding];
+
+        RawBufferClean = new byte[rawBufferSize];
 
         DecodedBuffer = new byte[decodedSize];
 
@@ -69,7 +70,9 @@ public partial class Ps3CamDriver
 
         // If you don't read thre data like that the driver insta crashes
         var idx = 0;
+
         Span<byte> buffer = stackalloc byte[deviceBufferSize];
+        
         while (true)
         {
             var ec = usbEndpointReader.Read(buffer, offset: 0, count: deviceBufferSize, Timeout, out var bytesRead);
@@ -79,6 +82,27 @@ public partial class Ps3CamDriver
                 throw new Exception(string.Format($"Error: '{ec}'. Bytes read: '{bytesRead}"));
             }
 
+            if (bytesRead == 0)
+            {
+                // sanity check but it should not happen (?)
+                break;
+            }
+
+            if (idx == rbl)
+            {
+                // buffer is full
+
+                //Process here instead?
+                break;
+            }
+
+            //if (idx + bytesRead > rbl)
+            //{
+            //    // workaround, avoid overflow
+            //    // weird bytes appear sometimes
+            //    bytesRead = rbl - idx;
+            //}
+
             var srcBuffer = buffer.Slice(0, bytesRead);
 
             var dstBuffer = new Span<byte>(RawBuffer, idx, bytesRead);
@@ -86,11 +110,6 @@ public partial class Ps3CamDriver
             idx += bytesRead;
 
             srcBuffer.CopyTo(dstBuffer);
-
-            if (bytesRead != deviceBufferSize)
-            {
-                break;
-            }
         }
 
         //if (bytesRead == 0)
@@ -106,68 +125,67 @@ public partial class Ps3CamDriver
         else
         {
             Frame++;
-        }
 
-        // padding is 456 => 38 * 12 BYTES
-        const int ratio = 6 * 2;
+            // padding is 456 => 38 * 12 BYTES
+            const int ratio = 6 * 2;
 
-        // Magic number
-        const int batchSizeBase = 160 * ratio;
+            // Magic number
+            const int batchSizeBase = 160 * ratio;
 
-        var indexSrc = 0;
-        var indexDst = 0;
+            var indexSrc = 0;
+            var indexDst = 0;
 
-        var cbl = RawBufferClean.Length;
-        var maxLength = cbl - batchSizeBase;
+            var cbl = RawBufferClean.Length;
+            var maxLength = cbl - batchSizeBase;
 
-        while (true)
-        {
-            var batchSize = batchSizeBase;
-
-            //const int totalDiscard = 1 * ratio;
-            //const int discardStart = totalDiscard;
-
-            //indexSrc += discardStart;
-            //batchSize -= discardStart;
-
-            if (indexDst >= maxLength)
+            while (true)
             {
-                break;
+                var batchSize = batchSizeBase;
+
+                //const int totalDiscard = 1 * ratio;
+                //const int discardStart = totalDiscard;
+
+                //indexSrc += discardStart;
+                //batchSize -= discardStart;
+
+                //if (indexSrc + batchSize > rbl)
+                //{
+                //    // Ignore ending padding
+                //    batchSize = rbl - indexSrc;
+                //}
+
+                var srcBuffer = new Span<byte>(RawBuffer, indexSrc, batchSize);
+
+                // Advance pointer over read bytes
+                indexSrc += batchSizeBase;
+
+                var copyLength = srcBuffer.Length;
+
+                var dstBuffer = new Span<byte>(RawBufferClean, indexDst, copyLength);
+
+                srcBuffer.CopyTo(dstBuffer);
+
+                indexDst += copyLength;
+
+                if (indexDst >= maxLength)
+                {
+                    break;
+                }
             }
 
-            if (indexSrc + batchSize > rbl)
-            {
-                // Ignore ending padding
-                batchSize = rbl - indexSrc;
-            }
-
-            var srcBuffer = new Span<byte>(RawBuffer, indexSrc, batchSize);
-
-            // Advance pointer over read bytes
-            indexSrc += batchSizeBase;
-
-            var copyLength = srcBuffer.Length;
-
-            var dstBuffer = new Span<byte>(RawBufferClean, indexDst, copyLength);
-
-            srcBuffer.CopyTo(dstBuffer);
-
-            indexDst += copyLength;
-
-        }
-
-        // number of bytes from one row of pixels in memory to the next row of pixels in memory
-        // almost there, first and last pixel are not existing in bayern data so we need that to make the stride be correct
-        //uint srcStride = size.Width;
-        //uint srcStride = size.Width + 2;
+            // number of bytes from one row of pixels in memory to the next row of pixels in memory
+            // almost there, first and last pixel are not existing in bayern data so we need that to make the stride be correct
+            //uint srcStride = size.Width;
+            //uint srcStride = size.Width + 2;
 
 #warning test if the filter works properly
 
-        //BayerFilter.ProcessFilter(size, RawBuffer, srcStride, DecodedBuffer, dstStride);
+            //BayerFilter.ProcessFilter(size, RawBuffer, srcStride, DecodedBuffer, dstStride);
 
-        var frameBuffer = FrameQueue.WriteFrame();
+            var frameBuffer = FrameQueue.WriteFrame();
 
-        RawBufferClean.CopyTo(frameBuffer, 0);
+            RawBufferClean.CopyTo(frameBuffer, 0);
+        }
 
         Console.Write($"\rStats: Frame:{Frame} Other:{Other}");
     }
