@@ -11,7 +11,6 @@ public partial class Ps3CamDriver
 {
     public FrameQueue FrameQueue = null!;
     private static readonly BayerFilter BayerFilter = new BayerFilter();
-    const int StreamPadding = 456;
 
     private void StartTransfer()
     {
@@ -19,9 +18,7 @@ public partial class Ps3CamDriver
 
         var decodedSize = FrameConfiguration.FrameBufferSize;
 
-        RawBuffer = new byte[rawBufferSize + StreamPadding];
-
-        RawBufferClean = new byte[rawBufferSize];
+        RawBuffer = new byte[rawBufferSize];
 
         DecodedBuffer = new byte[decodedSize];
 
@@ -69,20 +66,10 @@ public partial class Ps3CamDriver
     }
 
     private byte[] RawBuffer;
-    private byte[] RawBufferClean;
     private byte[] DecodedBuffer;
 
     private int Frame = 0;
-    private int Other = 0;
-
-    private int[] UnknownPacketSizes = new int[]
-    {
-        12,
-        40,
-        64,
-        72,
-    };
-
+    private int DesyncFrame = 0;
 
     private void ReadOne(UsbEndpointReader usbEndpointReader, int deviceBufferSize, VideoSize size, int fccBufferSize, uint dstStride)
     {
@@ -90,158 +77,92 @@ public partial class Ps3CamDriver
         var rawBufferLength = RawBuffer.Length;
 
         // If you don't read thre data like that the driver insta crashes
-        var rawBufferIndex = 0;
+        var dstIndex = 0;
 
-        Span<byte> buffer = stackalloc byte[deviceBufferSize];
+        // 12 bytes of unknown data each 2kb
+        const int paddingBytes = 12;
+        const int unknownPaddingSpacing = 2048;
+
+        var usbReadBufferSize = unknownPaddingSpacing;
+
+        Span<byte> buffer = stackalloc byte[usbReadBufferSize];
 
         //var readToPadding = false;
 
         while (true)
         {
-            Console.Write($"\rStats: Frame:{Frame} Other:{Other}");
+            Console.Write($"\rStats: Frame:{Frame} Other:{DesyncFrame}");
 
-            var ec = usbEndpointReader.Read(buffer, offset: 0, count: deviceBufferSize, Timeout, out var bytesRead);
+            var ec = usbEndpointReader.Read(buffer, offset: 0, count: usbReadBufferSize, Timeout, out var bytesRead);
 
             if (ec != Error.Success)
             {
                 throw new Exception(string.Format($"Error: '{ec}'. Bytes read: '{bytesRead}"));
             }
 
-            if (bytesRead == 0)
+            //#warning not correct
+            //            if (bytesRead == StreamPadding)
+            //            {
+            //                dstIndex = 0;
+            //            }
+
+            var srcIndex = 0;
+
+            var remeaningBytes = bytesRead;
+
+            // Sync Byte?
+            if (buffer[0] != 0x0C)
             {
-                // sanity check but it should not happen (?)
-                continue;
+                DesyncFrame++;
+                break;
             }
 
-            //if (UnknownPacketSizes.Contains(bytesRead))
-            //{
-            //    Other++;
-            //    // sanity check but it should not happen (?)
-            //    continue;
-            //}
-
-            var bytesRemeaning = bytesRead;
-
-            var srcBufferIndex = 0;
-
-            //if (rawBufferIndex == 0)
-            //{
-            //    srcBufferIndex += 56;
-            //    bytesRemeaning -= 56;
-            //}
-
-            while (bytesRemeaning > 0)
+            while (remeaningBytes > 0)
             {
-                var toReadNow = bytesRemeaning;
+                // Discard what we don't want
+                srcIndex += paddingBytes;
+                remeaningBytes -= paddingBytes;
 
-                var possibleMaxAddress = rawBufferIndex + bytesRemeaning;
+                var maxPossibleRead = rawBufferLength - dstIndex;
 
-                var addressDiff = rawBufferLength - possibleMaxAddress;
+                var readSize = remeaningBytes;
 
-                if (addressDiff < 0)
+                if (readSize > maxPossibleRead)
                 {
-                    // Will count enough to fill the buffer
-                    toReadNow += addressDiff;
+                    readSize = maxPossibleRead;
                 }
 
-                var srcBuffer = buffer.Slice(srcBufferIndex, toReadNow);
+                var srcBuffer = buffer.Slice(srcIndex, readSize);
 
-                var dstBuffer = new Span<byte>(RawBuffer, rawBufferIndex, toReadNow);
+                var destBuffer = new Span<byte>(RawBuffer, dstIndex, readSize);
 
-                srcBuffer.CopyTo(dstBuffer);
+                srcBuffer.CopyTo(destBuffer);
 
-                bytesRemeaning -= toReadNow;
-                rawBufferIndex += toReadNow;
+                // Advance pointers
+                remeaningBytes -= readSize;
+                srcIndex += readSize;
+                dstIndex += readSize;
 
-                if (rawBufferIndex == rawBufferLength)
+                if (dstIndex == rawBufferLength)
                 {
-                    var b64 = Convert.ToBase64String(RawBuffer);
+                    //var b64 = Convert.ToBase64String(RawBuffer);
                     //head = (head + 1) % MaxFramesInBuffer;
                     //var ptr = head * rawBufferLength;
-                    rawBufferIndex = 0;
+                    dstIndex = 0;
                     ProcessFrame();
                     break;
                 }
-            }
-
-#warning not correct
-            if (bytesRead == StreamPadding)
-            {
-                rawBufferIndex = 0;
             }
         }
     }
 
     private void ProcessFrame()
     {
-        // I'm using stack-allocked buffers because they do not cause memory corruption errors
-        var rawBufferLength = RawBuffer.Length;
-        var cleanBufferLength = RawBufferClean.Length;
-
-        // padding is 456 => 38 * 12 BYTES
-
-        // Unknown data each 2kb
-        int bytes = 12;
-        int batchSizeBase = 2048;
-
-        //const int bytes = 12;
-        //const int batchSizeBase = 2048;
-
-        var indexSrc = 0;
-        var indexDst = 0;
-
-        var maxLength = cleanBufferLength - batchSizeBase;
-
-        while (indexSrc < rawBufferLength)
-        {
-            var batchSize = batchSizeBase;
-
-            int totalDiscard = bytes;
-            int discardStart = totalDiscard;
-
-            indexSrc += discardStart;
-            batchSize -= discardStart;
-
-            var newMaxReadPos = indexSrc + batchSize;
-            if (newMaxReadPos > rawBufferLength)
-            {
-                // Can not read after ending of src stream
-                var diff = newMaxReadPos - rawBufferLength;
-                batchSize -= diff;
-
-                if (batchSize < 1)
-                {
-                    break;
-                }
-            }
-
-            var srcBuffer = new Span<byte>(RawBuffer, indexSrc, batchSize);
-
-            var copyLength = srcBuffer.Length;
-
-            var newMaxWritePos = indexDst + copyLength;
-
-            if (newMaxWritePos > cleanBufferLength)
-            {
-                // Can not read after ending of src stream
-                copyLength = newMaxWritePos - cleanBufferLength;
-                srcBuffer = new Span<byte>(RawBuffer, indexSrc, copyLength);
-            }
-
-            var dstBuffer = new Span<byte>(RawBufferClean, indexDst, copyLength);
-
-            srcBuffer.CopyTo(dstBuffer);
-
-            // Advance pointers
-            indexSrc += batchSize;
-            indexDst += copyLength;
-        }
-
         var frameBuffer = FrameQueue.WriteFrame();
 
         if (FrameConfiguration.ColorFormat == ColorFormat.Bayer)
         {
-            RawBufferClean.CopyTo(frameBuffer, 0);
+            RawBuffer.CopyTo(frameBuffer, 0);
         }
         else if (FrameConfiguration.ColorFormat == ColorFormat.RGB)
         {
@@ -253,7 +174,7 @@ public partial class Ps3CamDriver
 
 #warning test if the filter works properly
 
-            BayerFilter.ProcessFilter(size, RawBufferClean, srcStride, DecodedBuffer);
+            BayerFilter.ProcessFilter(size, RawBuffer, srcStride, DecodedBuffer);
 
             DecodedBuffer.CopyTo(frameBuffer, 0);
         }
@@ -261,12 +182,6 @@ public partial class Ps3CamDriver
         {
             throw new NotImplementedException();
         }
-
-        
-
-        
-
-        
 
         Frame++;
     }
