@@ -1,5 +1,8 @@
 using Ps3CameraDriver;
+using System.Drawing;
+using System;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using VirtualCameraCommon;
 
 namespace DiverTestHelper;
@@ -8,9 +11,9 @@ public partial class Form1 : Form
 {
     private readonly Ps3CamDriver Camera;
     //public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.VGA60;
-    public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.VGA30;
+    //public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.VGA30;
     //public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.VGA30BGR;
-    //public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.QVGA30BGR;
+    public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.QVGA30BGR;
     //public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.QVGA30;
     public uint Width => FrameConfiguration.VideoSize.Width;
     public uint Height => FrameConfiguration.VideoSize.Height;
@@ -18,6 +21,7 @@ public partial class Form1 : Form
 
     private Bitmap Image;
     private Bitmap Image2;
+    private Rectangle Rectangle;
 
     public Form1()
     {
@@ -26,8 +30,16 @@ public partial class Form1 : Form
         Camera.Init(FrameConfiguration);
         Camera.Start();
 
-        Image = new Bitmap((int)Width, (int)Height);
-        Image2 = new Bitmap((int)Width, (int)Height);
+        var imageSize = new Size((int)Width, (int)Height);
+
+        var origin = new Point(0, 0);
+
+        Rectangle = new Rectangle(origin, imageSize);
+
+        PixelFormat pixelFormat = PixelFormat.Format24bppRgb;
+
+        Image = new Bitmap(imageSize.Width, imageSize.Height, format: pixelFormat);
+        Image2 = new Bitmap(imageSize.Width, imageSize.Height, format: pixelFormat);
 
         DisableAntialiasing(Image);
         DisableAntialiasing(Image2);
@@ -60,7 +72,6 @@ public partial class Form1 : Form
         }
     }
 
-
     public unsafe void RenderFrame()
     {
         var fq = Camera.FrameQueue;
@@ -70,42 +81,42 @@ public partial class Form1 : Form
         var bl = frame.Length;
         //_renderTarget.Clear(new _D3DCOLORVALUE(0.5f, 0, 1, 1));
 
-        var index = 0;
-        var x = 0;
-        var y = 0;
+        var driverIndex = 0;
+        var bitmapIndex = 0;
 
-        fixed (byte* buffer = frame)
+        fixed (byte* driverBuffer = frame)
         {
-            while (index < bl)
+            while (driverIndex < bl)
             {
                 Color color;
 
+
+                BitmapData? bitmapData = Image.LockBits(Rectangle, ImageLockMode.WriteOnly, PixelFormat.Format24bppRgb);
+
+                byte* bitmapBuffer = (byte*)bitmapData.Scan0.ToPointer();
+
                 if (ColorFormat == ColorFormat.Bayer)
                 {
-                    var grey = buffer[index++];
-                    color = Color.FromArgb(grey, grey, grey);
+                    var grey = driverBuffer[driverIndex++];
+                    bitmapBuffer[bitmapIndex++] = grey;
+                    bitmapBuffer[bitmapIndex++] = grey;
+                    bitmapBuffer[bitmapIndex++] = grey;
                 }
                 else if (ColorFormat == ColorFormat.BGR)
                 {
-                    var b = buffer[index++];
-                    var g = buffer[index++];
-                    var r = buffer[index++];
-                    color = Color.FromArgb(r, g, b);
+                    var b = driverBuffer[driverIndex++];
+                    var g = driverBuffer[driverIndex++];
+                    var r = driverBuffer[driverIndex++];
+                    bitmapBuffer[bitmapIndex++] = b;
+                    bitmapBuffer[bitmapIndex++] = g;
+                    bitmapBuffer[bitmapIndex++] = r;
                 }
                 else
                 {
                     throw new NotImplementedException(nameof(ColorFormat));
                 }
 
-                Image.SetPixel(x, y, color);
-
-                x++;
-
-                if (x == Width)
-                {
-                    x = 0;
-                    y++;
-                }
+                Image.UnlockBits(bitmapData);
             }
         }
 
