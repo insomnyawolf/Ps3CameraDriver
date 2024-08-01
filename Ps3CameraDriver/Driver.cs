@@ -102,6 +102,8 @@ public partial class Ps3CamDriver
             return;
         }
 
+        InternalStop();
+
         HardwareRegisterWriteArray(CameraConfiguration.BridgeStart);
 
         SerialCameraControlBusWriteArray(CameraConfiguration.SensorStart);
@@ -115,24 +117,9 @@ public partial class Ps3CamDriver
         // Start stream
         HardwareRegisterWrite(OperationsOV534.Bridge2, 0x00);
 
+        StartTransfer();
+
         IsStreaming = true;
-
-        _ = Task.Run(() =>
-        {
-            try
-            {
-                StartTransfer();
-            }
-            catch
-            {
-
-            }
-            finally
-            {
-                
-                Stop();
-            }
-        });
     }
 
     public void Stop()
@@ -142,16 +129,21 @@ public partial class Ps3CamDriver
             return;
         }
 
+        InternalStop();
+
+        //UsbDevice.ReleaseInterface(0);
+
+        //UsbDevice.Close();
+
+        IsStreaming = false;
+    }
+
+    private void InternalStop()
+    {
         // Stop stream
         HardwareRegisterWrite(OperationsOV534.Bridge2, 0x09);
 
         SetLed(false);
-
-        UsbDevice.ReleaseInterface(0);
-
-        UsbDevice.Close();
-
-        IsStreaming = false;
     }
 
     private bool LedStatus;

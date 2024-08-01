@@ -11,10 +11,11 @@ public partial class Ps3CamDriver
     // ov534 Ps3Cam Hardware https://jim.sh/svn/jim/devl/playstation/ps3/eye/test/
     // OV7725 Datasheet https://pdf1.alldatasheet.com/datasheet-pdf/view/312422/OMNIVISION/OV7725.html
 
-    private const ushort Timeout = 500;
-    private const ushort BufferSize = 1024;
-    private const int StatusCheckMaxRetry = 5;
-    private const int MaxFramesInBuffer = 50;
+    public const ushort Timeout = 500;
+    public const ushort BufferSize = 1024;
+    public const int StatusCheckMaxRetry = 5;
+    public const int MaxFramesInBuffer = 5;
+    //public const int MaxFramesInBuffer = 50;
 
     const byte BaseRequestType = (byte)RequestType.Vendor | (byte)RequestRecipient.Device;
     const byte OutgoingRequestType = (byte)EndpointDirection.Out | BaseRequestType;

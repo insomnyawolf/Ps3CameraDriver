@@ -21,7 +21,7 @@ public partial class Ps3CamDriver
 
 public class BayerFilter
 {
-    private bool performDemosaicing = true;
+    private bool performDemosaicing = !true;
     private int[,] bayerPattern = new int[2, 2]
     {
         { RGB.G, RGB.R },
@@ -88,19 +88,17 @@ public class BayerFilter
     /// 
 
     //public void DebayerGrey(int Width, int Height, Span<byte> input, Span<byte> output)
-    public unsafe void ProcessFilter(VideoSize VideoSize, byte[] sourceData, uint srcStride, byte[] destinationData, uint destStride)
+    public unsafe void ProcessFilter(VideoSize VideoSize, byte[] sourceData, uint srcStride, byte[] destinationData)
     {
         // get width and height
         uint width = VideoSize.Width;
         uint height = VideoSize.Height;
 
-        uint widthM1 = width - 1;
-        uint heightM1 = height - 1;
+        uint widthM1 = width;
+        uint heightM1 = height;
 
-        uint srcOffset = srcStride - width;
-
-        // *3  Bith depth
-        uint dstOffset = destStride - width * 3;
+        uint srcOffset = 0;
+        uint dstOffset = 0;
 
         uint srcIndex = 0;
         uint dstIndex = 0;
@@ -110,16 +108,13 @@ public class BayerFilter
         {
             fixed (byte* dst = destinationData)
             {
-                Span<int> rgbValues = stackalloc int[3];
-                Span<int> rgbCounters = stackalloc int[3];
-
                 if (!performDemosaicing)
                 {
                     // for each line
                     for (int y = 0; y < height; y++)
                     {
                         // for each pixel
-                        for (int x = 0; x < width; x++, srcIndex++, dstIndex += 3)
+                        for (int x = 0; x < width; x++)
                         {
                             // index + 0
                             dst[dstIndex + RGB.B] = 0;
@@ -131,6 +126,9 @@ public class BayerFilter
                             var value = src[srcIndex];
 
                             dst[dstIndex + bayerPattern[y & 1, x & 1]] = value;
+
+                            srcIndex++;
+                            dstIndex += 3;
                         }
                         srcIndex += srcOffset;
                         dstIndex += dstOffset;
@@ -139,11 +137,14 @@ public class BayerFilter
                     return;
                 }
 
+                Span<int> rgbValues = stackalloc int[3];
+                Span<int> rgbCounters = stackalloc int[3];
+
                 // for each line
                 for (int y = 0; y < height; y++)
                 {
                     // for each pixel
-                    for (int x = 0; x < width; x++, srcIndex++, dstIndex += 3)
+                    for (int x = 0; x < width; x++)
                     {
                         // 0
                         rgbValues[RGB.B] = 0;
@@ -227,6 +228,9 @@ public class BayerFilter
                         dst[dstIndex + RGB.R] = (byte)(rgbValues[RGB.R] / rgbCounters[RGB.R]);
                         dst[dstIndex + RGB.G] = (byte)(rgbValues[RGB.G] / rgbCounters[RGB.G]);
                         dst[dstIndex + RGB.B] = (byte)(rgbValues[RGB.B] / rgbCounters[RGB.B]);
+
+                        srcIndex++;
+                        dstIndex += 3;
                     }
 
                     srcIndex += srcOffset;
@@ -341,24 +345,4 @@ public struct RGB
         this.Blue = color.B;
         this.Alpha = color.A;
     }
-
-    ///// <summary>
-    ///// Performs an explicit conversion from <see cref="RGB"/> to <see cref="HSL"/>.
-    ///// </summary>
-    ///// <param name="rgb">The RGB color.</param>
-    ///// <returns>The result of the conversion.</returns>
-    //public static explicit operator HSL(RGB rgb)
-    //{
-    //    return HSL.FromRGB(rgb);
-    //}
-
-    ///// <summary>
-    ///// Performs an explicit conversion from <see cref="RGB"/> to <see cref="YCbCr"/>.
-    ///// </summary>
-    ///// <param name="rgb">The RGB color.</param>
-    ///// <returns>The result of the conversion.</returns>
-    //public static explicit operator YCbCr(RGB rgb)
-    //{
-    //    return YCbCr.FromRGB(rgb);
-    //}
 }

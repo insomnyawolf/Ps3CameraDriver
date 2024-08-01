@@ -49,6 +49,12 @@ public readonly record struct FrameConfiguration
         ColorFormat: ColorFormat.Bayer
     );
 
+    public static FrameConfiguration QVGA30RGB => new FrameConfiguration(
+        VideoSize: VideoSize.QVGA,
+        FramesPerSecond: 30,
+        ColorFormat: ColorFormat.RGB
+    );
+
     private static uint GetStride(byte BytesPerPixel, uint Width)
     {
         return BytesPerPixel * Width;

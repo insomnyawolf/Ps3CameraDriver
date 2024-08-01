@@ -4,7 +4,7 @@ namespace Ps3CameraDriver;
 
 public class FrameQueue
 {
-    public const int MaxFramesInBuffer = 5;
+    public const int MaxFramesInBuffer = Ps3CamDriver.MaxFramesInBuffer;
     public const int MaxLength = MaxFramesInBuffer - 1;
     private readonly List<byte[]> FrameBuffers = new();
 

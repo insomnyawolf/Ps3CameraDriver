@@ -2,6 +2,7 @@
 using LibUsbDotNet.Info;
 using LibUsbDotNet.LibUsb;
 using LibUsbDotNet.Main;
+using System.Drawing;
 using VirtualCameraCommon;
 
 namespace Ps3CameraDriver;
@@ -34,7 +35,22 @@ public partial class Ps3CamDriver
 
         UsbEndpointReader = UsbDevice.OpenEndpointReader(endpointAddress, deviceBufferSize, EndpointType.Bulk);
 
-        ReadStreamData(UsbEndpointReader, deviceBufferSize);
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                ReadStreamData(UsbEndpointReader, deviceBufferSize);
+            }
+            catch
+            {
+
+            }
+            finally
+            {
+
+                Stop();
+            }
+        });
     }
 
     UsbEndpointReader UsbEndpointReader;
@@ -67,6 +83,7 @@ public partial class Ps3CamDriver
         72,
     };
 
+
     private void ReadOne(UsbEndpointReader usbEndpointReader, int deviceBufferSize, VideoSize size, int fccBufferSize, uint dstStride)
     {
         // I'm using stack-allocked buffers because they do not cause memory corruption errors
@@ -77,7 +94,7 @@ public partial class Ps3CamDriver
 
         Span<byte> buffer = stackalloc byte[deviceBufferSize];
 
-        var readToPadding = false;
+        //var readToPadding = false;
 
         while (true)
         {
@@ -107,6 +124,12 @@ public partial class Ps3CamDriver
 
             var srcBufferIndex = 0;
 
+            //if (rawBufferIndex == 0)
+            //{
+            //    srcBufferIndex += 56;
+            //    bytesRemeaning -= 56;
+            //}
+
             while (bytesRemeaning > 0)
             {
                 var toReadNow = bytesRemeaning;
@@ -132,9 +155,19 @@ public partial class Ps3CamDriver
 
                 if (rawBufferIndex == rawBufferLength)
                 {
+                    var b64 = Convert.ToBase64String(RawBuffer);
+                    //head = (head + 1) % MaxFramesInBuffer;
+                    //var ptr = head * rawBufferLength;
                     rawBufferIndex = 0;
                     ProcessFrame();
+                    break;
                 }
+            }
+
+#warning not correct
+            if (bytesRead == StreamPadding)
+            {
+                rawBufferIndex = 0;
             }
         }
     }
@@ -143,66 +176,97 @@ public partial class Ps3CamDriver
     {
         // I'm using stack-allocked buffers because they do not cause memory corruption errors
         var rawBufferLength = RawBuffer.Length;
+        var cleanBufferLength = RawBufferClean.Length;
 
         // padding is 456 => 38 * 12 BYTES
-        const int ratio = 6 * 2;
 
-        // Magic number
-        const int batchSizeBase = 160 * ratio;
+        // Unknown data each 2kb
+        int bytes = 12;
+        int batchSizeBase = 2048;
+
+        //const int bytes = 12;
+        //const int batchSizeBase = 2048;
 
         var indexSrc = 0;
         var indexDst = 0;
 
-        var cbl = RawBufferClean.Length;
-        var maxLength = cbl - batchSizeBase;
+        var maxLength = cleanBufferLength - batchSizeBase;
 
-        while (true)
+        while (indexSrc < rawBufferLength)
         {
             var batchSize = batchSizeBase;
 
-            //const int totalDiscard = 1 * ratio;
-            //const int discardStart = totalDiscard;
+            int totalDiscard = bytes;
+            int discardStart = totalDiscard;
 
-            //indexSrc += discardStart;
-            //batchSize -= discardStart;
+            indexSrc += discardStart;
+            batchSize -= discardStart;
 
-            if (indexSrc + batchSize > rawBufferLength)
+            var newMaxReadPos = indexSrc + batchSize;
+            if (newMaxReadPos > rawBufferLength)
             {
-                // Ignore ending padding
-                batchSize = rawBufferLength - indexSrc;
+                // Can not read after ending of src stream
+                var diff = newMaxReadPos - rawBufferLength;
+                batchSize -= diff;
+
+                if (batchSize < 1)
+                {
+                    break;
+                }
             }
 
             var srcBuffer = new Span<byte>(RawBuffer, indexSrc, batchSize);
 
-            // Advance pointer over read bytes
-            indexSrc += batchSizeBase;
-
             var copyLength = srcBuffer.Length;
+
+            var newMaxWritePos = indexDst + copyLength;
+
+            if (newMaxWritePos > cleanBufferLength)
+            {
+                // Can not read after ending of src stream
+                copyLength = newMaxWritePos - cleanBufferLength;
+                srcBuffer = new Span<byte>(RawBuffer, indexSrc, copyLength);
+            }
 
             var dstBuffer = new Span<byte>(RawBufferClean, indexDst, copyLength);
 
             srcBuffer.CopyTo(dstBuffer);
 
+            // Advance pointers
+            indexSrc += batchSize;
             indexDst += copyLength;
-
-            if (indexDst >= maxLength)
-            {
-                break;
-            }
         }
-
-        // number of bytes from one row of pixels in memory to the next row of pixels in memory
-        // almost there, first and last pixel are not existing in bayern data so we need that to make the stride be correct
-        //uint srcStride = size.Width;
-        //uint srcStride = size.Width + 2;
-
-#warning test if the filter works properly
-
-        //BayerFilter.ProcessFilter(size, RawBuffer, srcStride, DecodedBuffer, dstStride);
 
         var frameBuffer = FrameQueue.WriteFrame();
 
-        RawBufferClean.CopyTo(frameBuffer, 0);
+        if (FrameConfiguration.ColorFormat == ColorFormat.Bayer)
+        {
+            RawBufferClean.CopyTo(frameBuffer, 0);
+        }
+        else if (FrameConfiguration.ColorFormat == ColorFormat.RGB)
+        {
+            // number of bytes from one row of pixels in memory to the next row of pixels in memory
+            // almost there, first and last pixel are not existing in bayern data so we need that to make the stride be correct
+            var fc = FrameConfiguration;
+            var size = fc.VideoSize;
+            uint srcStride = size.Width;
+
+#warning test if the filter works properly
+
+            BayerFilter.ProcessFilter(size, RawBufferClean, srcStride, DecodedBuffer);
+
+            DecodedBuffer.CopyTo(frameBuffer, 0);
+        }
+        else
+        {
+            throw new NotImplementedException();
+        }
+
+        
+
+        
+
+        
 
         Frame++;
     }
