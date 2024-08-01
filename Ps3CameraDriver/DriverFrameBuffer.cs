@@ -2,7 +2,6 @@
 using LibUsbDotNet.Info;
 using LibUsbDotNet.LibUsb;
 using LibUsbDotNet.Main;
-using System.Drawing;
 using VirtualCameraCommon;
 
 namespace Ps3CameraDriver;
@@ -83,11 +82,13 @@ public partial class Ps3CamDriver
         const int paddingBytes = 12;
         const int unknownPaddingSpacing = 2048;
 
+        //// If this is not buffer size wont work on windows camera driver for some reason
+        //var usbReadBufferSize = deviceBufferSize;
         var usbReadBufferSize = unknownPaddingSpacing;
 
         Span<byte> buffer = stackalloc byte[usbReadBufferSize];
 
-        //var readToPadding = false;
+        Span<byte> oldFrameId = stackalloc byte[4];
 
         while (true)
         {
@@ -110,15 +111,50 @@ public partial class Ps3CamDriver
 
             var remeaningBytes = bytesRead;
 
-            // Sync Byte?
-            if (buffer[0] != 0x0C)
-            {
-                DesyncFrame++;
-                break;
-            }
+            
 
             while (remeaningBytes > 0)
             {
+                var paddingBuffer = buffer.Slice(srcIndex, paddingBytes);
+
+                // 0 => Header Length/Magic Bit
+                // 1 => Unknown
+                // 2,3,4,5 => FrameId
+                // 6 - 12 => Unknown
+
+                // Sync Frame
+                var frameId = paddingBuffer.Slice(2, 4);
+
+                // Unrolled loop coz faster
+                var headerMatch =
+                frameId[0] == oldFrameId[0]
+                &&
+                frameId[1] == oldFrameId[1]
+                &&
+                frameId[2] == oldFrameId[2]
+                &&
+                frameId[3] == oldFrameId[3]
+                ;
+
+                if (!headerMatch)
+                {
+                    // Discard incomplete frames
+                    if (dstIndex == rawBufferLength)
+                    {
+                        ProcessFrame();
+                    }
+
+                    dstIndex = 0;
+                    frameId.CopyTo(oldFrameId);
+                }
+
+                //if (buffer[0] != 0x0C)
+                //{
+                //    // Sync needed
+                //    DesyncFrame++;
+                //    break;
+                //}
+
                 // Discard what we don't want
                 srcIndex += paddingBytes;
                 remeaningBytes -= paddingBytes;
@@ -143,15 +179,15 @@ public partial class Ps3CamDriver
                 srcIndex += readSize;
                 dstIndex += readSize;
 
-                if (dstIndex == rawBufferLength)
-                {
-                    //var b64 = Convert.ToBase64String(RawBuffer);
-                    //head = (head + 1) % MaxFramesInBuffer;
-                    //var ptr = head * rawBufferLength;
-                    dstIndex = 0;
-                    ProcessFrame();
-                    break;
-                }
+                //if (dstIndex == rawBufferLength)
+                //{
+                //    //var b64 = Convert.ToBase64String(RawBuffer);
+                //    //head = (head + 1) % MaxFramesInBuffer;
+                //    //var ptr = head * rawBufferLength;
+                //    dstIndex = 0;
+                //    ProcessFrame();
+                //    break;
+                //}
             }
         }
     }
@@ -164,7 +200,7 @@ public partial class Ps3CamDriver
         {
             RawBuffer.CopyTo(frameBuffer, 0);
         }
-        else if (FrameConfiguration.ColorFormat == ColorFormat.RGB)
+        else if (FrameConfiguration.ColorFormat == ColorFormat.BGR)
         {
             // number of bytes from one row of pixels in memory to the next row of pixels in memory
             // almost there, first and last pixel are not existing in bayern data so we need that to make the stride be correct

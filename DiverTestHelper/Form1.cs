@@ -1,6 +1,5 @@
 using Ps3CameraDriver;
 using System.Drawing.Drawing2D;
-using System.Xml.Linq;
 using VirtualCameraCommon;
 
 namespace DiverTestHelper;
@@ -9,7 +8,9 @@ public partial class Form1 : Form
 {
     private readonly Ps3CamDriver Camera;
     //public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.VGA60;
-    public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.QVGA30RGB;
+    public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.VGA30;
+    //public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.VGA30BGR;
+    //public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.QVGA30BGR;
     //public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.QVGA30;
     public uint Width => FrameConfiguration.VideoSize.Width;
     public uint Height => FrameConfiguration.VideoSize.Height;
@@ -84,11 +85,11 @@ public partial class Form1 : Form
                     var grey = buffer[index++];
                     color = Color.FromArgb(grey, grey, grey);
                 }
-                else if (ColorFormat == ColorFormat.RGB)
+                else if (ColorFormat == ColorFormat.BGR)
                 {
-                    var r = buffer[index++];
-                    var g = buffer[index++];
                     var b = buffer[index++];
+                    var g = buffer[index++];
+                    var r = buffer[index++];
                     color = Color.FromArgb(r, g, b);
                 }
                 else

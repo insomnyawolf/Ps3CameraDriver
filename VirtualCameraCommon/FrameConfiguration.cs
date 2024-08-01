@@ -37,6 +37,12 @@ public readonly record struct FrameConfiguration
         ColorFormat: ColorFormat.Bayer
     );
 
+    public static FrameConfiguration VGA30BGR => new FrameConfiguration(
+        VideoSize: VideoSize.VGA,
+        FramesPerSecond: 30,
+        ColorFormat: ColorFormat.BGR
+    );
+
     public static FrameConfiguration QVGA60 => new FrameConfiguration(
         VideoSize: VideoSize.QVGA,
         FramesPerSecond: 60,
@@ -49,10 +55,10 @@ public readonly record struct FrameConfiguration
         ColorFormat: ColorFormat.Bayer
     );
 
-    public static FrameConfiguration QVGA30RGB => new FrameConfiguration(
+    public static FrameConfiguration QVGA30BGR => new FrameConfiguration(
         VideoSize: VideoSize.QVGA,
         FramesPerSecond: 30,
-        ColorFormat: ColorFormat.RGB
+        ColorFormat: ColorFormat.BGR
     );
 
     private static uint GetStride(byte BytesPerPixel, uint Width)
@@ -79,15 +85,15 @@ public readonly record struct FrameConfiguration
             return 1;
         }
 
-        if (colorFormat == ColorFormat.RGB)
-        {
-            return 3;
-        }
-
         if (colorFormat == ColorFormat.BGR)
         {
             return 3;
         }
+
+        //if (colorFormat == ColorFormat.RGB)
+        //{
+        //    return 3;
+        //}
 
         //if (colorFormat == ColorFormat.RGBA)
         //{

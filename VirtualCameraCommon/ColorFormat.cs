@@ -11,13 +11,13 @@ public enum ColorFormat : int
     /// </summary>
     Gray,
     /// <summary>
-    /// Output in RGB. Destination buffer must be width * height * 3 bytes
-    /// </summary>
-    RGB,
-    /// <summary>
     /// Output in BGR. Destination buffer must be width * height * 3 bytes
     /// </summary>
     BGR,
+    ///// <summary>
+    ///// Output in RGB. Destination buffer must be width * height * 3 bytes
+    ///// </summary>
+    //RGB,
 #warning does alpha channel in a webcam matters?
     ///// <summary>
     ///// Output in RGBA. Destination buffer must be width * height * 4 bytes
