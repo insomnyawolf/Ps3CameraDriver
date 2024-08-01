@@ -8,6 +8,7 @@ namespace DiverTestHelper;
 public partial class Form1 : Form
 {
     private readonly Ps3CamDriver Camera;
+    //public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.VGA30;
     public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.QVGA30RGB;
     //public readonly FrameConfiguration FrameConfiguration = FrameConfiguration.QVGA30;
     public uint Width => FrameConfiguration.VideoSize.Width;
