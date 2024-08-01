@@ -45,3 +45,17 @@ Even with a simple filter the image is broken, looks like it gets shifted each c
 ### Camera output performance is bad
 
 I am trying to optimize it but for some reason it breaks when i try to do so ;-;
+
+
+### Protocol packet Shinenigans
+
+Packet Sizes:
+
+12 (unknown)
+40 (unknown)
+64 (unknown)
+72 (unknown)
+456 (frame data)
+512 (frame data)
+
+(frame data may include padding and/or checksumdata)

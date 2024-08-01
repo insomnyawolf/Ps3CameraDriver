@@ -11,7 +11,13 @@ internal class Program
         var cameras = Ps3CamDriverLoader.GetAvailableCameras();
 
         foreach (var cam in cameras) 
-        { 
+        {
+            Console.CancelKeyPress += (object? sender, ConsoleCancelEventArgs e) =>
+            {
+                e.Cancel = true;
+                cam.Stop();
+            };
+
             //cam.Init(FrameConfiguration.VGA60);
             cam.Init(FrameConfiguration.QVGA30);
 
@@ -35,7 +41,7 @@ internal class Program
                 //fq.FinishReadFrame();
             }
 
-            cam.Stop();
+           
 
             //ps3cam.ToggleLed();
         }

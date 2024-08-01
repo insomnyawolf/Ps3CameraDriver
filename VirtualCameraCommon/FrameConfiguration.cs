@@ -28,25 +28,25 @@ public readonly record struct FrameConfiguration
     public static FrameConfiguration VGA60 => new FrameConfiguration(
         VideoSize: VideoSize.VGA,
         FramesPerSecond: 60,
-        ColorFormat: ColorFormat.RGB
+        ColorFormat: ColorFormat.Bayer
     );
 
     public static FrameConfiguration VGA30 => new FrameConfiguration(
         VideoSize: VideoSize.VGA,
         FramesPerSecond: 30,
-        ColorFormat: ColorFormat.RGB
+        ColorFormat: ColorFormat.Bayer
     );
 
     public static FrameConfiguration QVGA60 => new FrameConfiguration(
         VideoSize: VideoSize.QVGA,
         FramesPerSecond: 60,
-        ColorFormat: ColorFormat.RGB
+        ColorFormat: ColorFormat.Bayer
     );
 
     public static FrameConfiguration QVGA30 => new FrameConfiguration(
         VideoSize: VideoSize.QVGA,
         FramesPerSecond: 30,
-        ColorFormat: ColorFormat.RGB
+        ColorFormat: ColorFormat.Bayer
     );
 
     private static uint GetStride(byte BytesPerPixel, uint Width)
