@@ -39,5 +39,5 @@ I need some help
 
 ### Weirdness:
 
-* 456 bytes padding when reading from the sensor in qvga split in 12bytes each 2048bytes
+* padding when reading from the sensor split in 12 bytes each 2048bytes
 
